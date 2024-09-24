@@ -1,31 +1,75 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal, TextInput, Button } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { BoxContext } from '../context/BoxContext'; 
+import { BoxContext } from '../context/BoxContext';
+import { supabase } from '../supabase';
 
 export default function BoxDetailsScreen({ route }) {
   const { boxName } = route.params;
-  const { boxes, addItemToBox, updateItemInBox } = useContext(BoxContext);
-  const [items, setItems] = useState(boxes[boxName]);
+  const { boxes, addItemToBox, updateItemInBox, removeItemFromBox } = useContext(BoxContext); // Adiciona a função removeItemFromBox
+  const [items, setItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemQuantity, setNewItemQuantity] = useState('');
   const [editingItem, setEditingItem] = useState(null);
 
-  // Adiciona ou edita um item
-  const saveItem = () => {
+  const fetchItems = async () => {
+    const { data: boxData, error: boxError } = await supabase
+      .from('caixas')
+      .select('id')
+      .eq('name', boxName)
+      .single();
+
+    if (boxError || !boxData) {
+      console.error('Erro ao buscar o ID da caixa:', boxError?.message || 'Caixa não encontrada');
+      return;
+    }
+
+    const boxId = boxData.id;
+
+    const { data: itemData, error: itemError } = await supabase
+      .from('itens')
+      .select('*')
+      .eq('box_id', boxId);
+
+    if (itemError) {
+      console.error('Erro ao carregar itens:', itemError.message);
+    } else {
+      setItems(itemData);
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const saveItem = async () => {
     if (newItemName && newItemQuantity) {
       if (editingItem !== null) {
-        const updatedItems = items.map(item => 
-          item === editingItem ? { name: newItemName, quantity: newItemQuantity } : item
-        );
-        setItems(updatedItems);
-        updateItemInBox(boxName, updatedItems); 
+        // Atualizando um item existente
+        const updatedItem = {
+          originalName: editingItem.name,
+          name: newItemName,
+          quantity: newItemQuantity,
+        };
+  
+        await updateItemInBox(boxName, updatedItem); // Atualiza o item no Supabase
+  
+        // Atualiza o estado local após a edição
+        setItems(items.map(item => 
+          item.name === editingItem.name 
+            ? { name: newItemName, quantity: newItemQuantity }
+            : item
+        ));
       } else {
+        // Adicionando um novo item
         const newItem = { name: newItemName, quantity: newItemQuantity };
+  
+        await addItemToBox(boxName, newItem)
+
         setItems([...items, newItem]);
-        addItemToBox(boxName, newItem); 
       }
+
       setNewItemName('');
       setNewItemQuantity('');
       setEditingItem(null);
@@ -33,10 +77,9 @@ export default function BoxDetailsScreen({ route }) {
     }
   };
 
-  const removeItem = (itemToRemove) => {
-    const updatedItems = items.filter(item => item !== itemToRemove);
-    setItems(updatedItems);
-    updateItemInBox(boxName, updatedItems); 
+  const removeItem = (item) => {
+    removeItemFromBox(boxName, item.name);
+    setItems(items.filter(i => i.name !== item.name)); 
   };
 
   const editItem = (item) => {

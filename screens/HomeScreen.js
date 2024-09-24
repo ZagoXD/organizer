@@ -1,30 +1,32 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, Button } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 
 export default function HomeScreen({ navigation }) {
-  const { boxes, addBox, removeBox, editBoxName } = useContext(BoxContext);
+  const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext); 
   const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
   const [newBoxName, setNewBoxName] = useState('');
-  const [boxToEdit, setBoxToEdit] = useState('');
-  const [editedBoxName, setEditedBoxName] = useState('');
 
   // Função para filtrar caixas com base na pesquisa de objetos
   const filterBoxesBySearch = () => {
     if (!search.trim()) {
       return Object.keys(boxes);
     }
-
-    // Filtra caixas que contêm o objeto pesquisado
+  
+    // Filtra caixas que contêm itens cujo nome corresponde ao termo de pesquisa
     return Object.keys(boxes).filter(boxName =>
-      boxes[boxName].some(item => 
+      boxes[boxName].some(item =>
         item.name.toLowerCase().includes(search.toLowerCase())
       )
     );
   };
+  
+
+  useEffect(() => {
+    fetchBoxes();
+  }, []);
 
   const renderItem = ({ item }) => (
     <View style={styles.boxContainer}>
@@ -35,10 +37,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.boxText}>{item}</Text>
       </TouchableOpacity>
       <View style={styles.boxActions}>
-        <TouchableOpacity onPress={() => handleEditBox(item)}>
-          <Icon name="edit" size={24} color="blue" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => removeBox(item)}>
+        <TouchableOpacity onPress={() => removeBox(item)}> 
           <Icon name="delete" size={24} color="red" />
         </TouchableOpacity>
       </View>
@@ -50,19 +49,6 @@ export default function HomeScreen({ navigation }) {
       addBox(newBoxName);
       setNewBoxName('');
       setModalVisible(false); 
-    }
-  };
-
-  const handleEditBox = (boxName) => {
-    setBoxToEdit(boxName);
-    setEditedBoxName(boxName);
-    setEditModalVisible(true);
-  };
-
-  const handleSaveEditBox = () => {
-    if (editedBoxName.trim()) {
-      editBoxName(boxToEdit, editedBoxName);
-      setEditModalVisible(false);
     }
   };
 
@@ -80,7 +66,6 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de caixas */}
       <FlatList
         data={filterBoxesBySearch()}
         renderItem={renderItem}
@@ -89,7 +74,6 @@ export default function HomeScreen({ navigation }) {
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma caixa encontrada.</Text>}
       />
 
-      {/* Modal para adicionar nova caixa */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -108,27 +92,6 @@ export default function HomeScreen({ navigation }) {
             />
             <Button title="Adicionar Caixa" onPress={handleAddBox} />
             <Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Editar Nome da Caixa</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Novo nome da caixa"
-              value={editedBoxName}
-              onChangeText={setEditedBoxName}
-            />
-            <Button title="Salvar" onPress={handleSaveEditBox} />
-            <Button title="Cancelar" color="red" onPress={() => setEditModalVisible(false)} />
           </View>
         </View>
       </Modal>
