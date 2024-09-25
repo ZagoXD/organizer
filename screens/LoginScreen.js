@@ -37,12 +37,14 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
         placeholderTextColor="#555" 
       />
-      <Button title="Entrar" onPress={handleLogin} />
+      <Button style={styles.btnLogin} title="Entrar" onPress={handleLogin} />
 
-      <Button
-        title="Não tem uma conta? Registre-se"
-        onPress={() => navigation.navigate('Register')}
-      />
+      <View style={styles.registerButton}>
+        <Button
+          title="Não tem uma conta? Registre-se"
+          onPress={() => navigation.navigate('Register')}
+        />
+      </View>
     </View>
   );
 }
@@ -53,6 +55,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  registerButton: {
+    marginTop: 40,
   },
   title: {
     fontSize: 24,
