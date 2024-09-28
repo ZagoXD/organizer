@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, Button } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, Button, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 
@@ -22,11 +22,27 @@ export default function HomeScreen({ navigation }) {
       )
     );
   };
-  
 
   useEffect(() => {
     fetchBoxes();
   }, []);
+
+  const handleRemoveBox = async (boxName) => {
+    try {
+      const boxItems = boxes[boxName];
+      if (boxItems.length > 0) {
+        Alert.alert(
+          "Erro",
+          "Não é possível excluir um container com itens nele. Reorganize ou remova os itens antes de excluir.",
+          [{ text: "OK" }]
+        );
+      } else {
+        await removeBox(boxName); // Remover a caixa se ela estiver vazia
+      }
+    } catch (error) {
+      console.error("Erro ao tentar remover a caixa:", error);
+    }
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.boxContainer}>
@@ -37,7 +53,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.boxText}>{item}</Text>
       </TouchableOpacity>
       <View style={styles.boxActions}>
-        <TouchableOpacity onPress={() => removeBox(item)}> 
+        <TouchableOpacity onPress={() => handleRemoveBox(item)}> 
           <Icon name="delete" size={24} color="red" />
         </TouchableOpacity>
       </View>
@@ -71,7 +87,7 @@ export default function HomeScreen({ navigation }) {
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         style={styles.boxList}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma caixa encontrada.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum container encontrado.</Text>}
       />
 
       <Modal
@@ -82,16 +98,16 @@ export default function HomeScreen({ navigation }) {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Nova Caixa</Text>
+            <Text style={styles.modalTitle}>Adicionar Novo Container</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nome da caixa"
+              placeholder="Nome do container"
               value={newBoxName}
               onChangeText={setNewBoxName}
-              placeholderTextColor="#555"
+              placeholderTextColor="gray"
             />
-            <Button title="Adicionar Caixa" onPress={handleAddBox} />
-            <Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} />
+            <Button title="Adicionar Container" onPress={handleAddBox} />
+            <View style={styles.cancelBtnCreateBox}><Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} /></View>
           </View>
         </View>
       </Modal>
@@ -108,6 +124,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  cancelBtnCreateBox: {
+    marginTop: 10,
   },
   searchInput: {
     flex: 1,
@@ -156,7 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    width: '80%',
+    width: '85%',
     padding: 35,
     backgroundColor: 'white',
     borderRadius: 10,
@@ -167,17 +186,17 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
   },
   input: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginBottom: 15,
+    marginBottom: 20,
   },
 });

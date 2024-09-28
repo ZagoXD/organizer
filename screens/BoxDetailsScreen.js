@@ -46,23 +46,21 @@ export default function BoxDetailsScreen({ route }) {
   const saveItem = async () => {
     if (newItemName && newItemQuantity) {
       if (editingItem !== null) {
-        // Atualizando um item existente
         const updatedItem = {
           originalName: editingItem.name,
           name: newItemName,
           quantity: newItemQuantity,
         };
   
-        await updateItemInBox(boxName, updatedItem); // Atualiza o item no Supabase
-  
-        // Atualiza o estado local após a edição
+        await updateItemInBox(boxName, updatedItem);
+
         setItems(items.map(item => 
           item.name === editingItem.name 
             ? { name: newItemName, quantity: newItemQuantity }
             : item
         ));
       } else {
-        // Adicionando um novo item
+
         const newItem = { name: newItemName, quantity: newItemQuantity };
   
         await addItemToBox(boxName, newItem)
@@ -91,7 +89,10 @@ export default function BoxDetailsScreen({ route }) {
 
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
-      <Text style={styles.itemText}>{item.name} - Quantidade: {item.quantity}</Text>
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemQuantity}>Quantidade: {item.quantity}</Text>
+      </View>
       <View style={styles.itemActions}>
         <TouchableOpacity onPress={() => editItem(item)}>
           <Icon name="edit" size={24} color="blue" />
@@ -133,7 +134,7 @@ export default function BoxDetailsScreen({ route }) {
               placeholder="Nome do item"
               value={newItemName}
               onChangeText={setNewItemName}
-              placeholderTextColor="#555"
+              placeholderTextColor="gray"
             />
             <TextInput
               style={styles.input}
@@ -141,10 +142,10 @@ export default function BoxDetailsScreen({ route }) {
               value={newItemQuantity}
               keyboardType="numeric"
               onChangeText={setNewItemQuantity}
-              placeholderTextColor="#555"
+              placeholderTextColor="gray"
             />
             <Button title={editingItem ? "Salvar Alterações" : "Adicionar"} onPress={saveItem} />
-            <Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} />
+            <View style={styles.cancelBtnAddItem}><Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} /></View>
           </View>
         </View>
       </Modal>
@@ -156,6 +157,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+  },
+  cancelBtnAddItem: {
+    marginTop: 20,
   },
   title: {
     fontSize: 24,
@@ -175,14 +179,19 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  itemText: {
-    fontSize: 18,
+  itemInfo: {
+    flex: 1, 
+    marginRight: 10, 
   },
-  emptyText: {
-    textAlign: 'center',
+  itemName: {
+    fontSize: 18,
+    maxWidth: '80%',
+    flexWrap: 'wrap', 
+    fontWeight: 'bold',
+  },
+  itemQuantity: {
     fontSize: 16,
     color: '#888',
-    marginTop: 20,
   },
   itemActions: {
     flexDirection: 'row',
@@ -207,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
   },
   modalView: {
-    width: '80%',
+    width: '85%',
     padding: 35,
     backgroundColor: 'white',
     borderRadius: 10,
@@ -224,7 +233,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
