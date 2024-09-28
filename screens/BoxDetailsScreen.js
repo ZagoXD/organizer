@@ -14,30 +14,45 @@ export default function BoxDetailsScreen({ route }) {
   const [editingItem, setEditingItem] = useState(null);
 
   const fetchItems = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
+      return;
+    }
+  
     const { data: boxData, error: boxError } = await supabase
       .from('caixas')
       .select('id')
       .eq('name', boxName)
-      .single();
-
-    if (boxError || !boxData) {
-      console.error('Erro ao buscar o ID da caixa:', boxError?.message || 'Caixa não encontrada');
+      .eq('user_id', user.id) // Certifica-se de buscar a caixa do usuário
+      .maybeSingle();  // Substitua por maybeSingle para evitar o erro de múltiplos resultados
+  
+    if (boxError) {
+      console.error('Erro ao buscar o ID da caixa:', boxError.message);
       return;
     }
-
+  
+    if (!boxData) {
+      console.error('Caixa não encontrada ou múltiplas caixas retornadas');
+      return;
+    }
+  
     const boxId = boxData.id;
-
+  
+    // Buscar os itens da caixa
     const { data: itemData, error: itemError } = await supabase
       .from('itens')
       .select('*')
       .eq('box_id', boxId);
-
+  
     if (itemError) {
       console.error('Erro ao carregar itens:', itemError.message);
     } else {
       setItems(itemData);
     }
   };
+  
 
   useEffect(() => {
     fetchItems();
