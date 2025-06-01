@@ -21,7 +21,7 @@ export default function LoginScreen({ navigation }) {
         const { data: { session } } = await supabase.auth.getSession();
   
         if (session) {
-          navigation.navigate('Home');
+          navigation.navigate('Environments');
         }
       };
   
@@ -38,7 +38,7 @@ export default function LoginScreen({ navigation }) {
       const translatedMessage = errorMessages[error.message] || error.message;
       Alert.alert('Erro', translatedMessage);
     } else {
-      navigation.navigate('Home');
+      navigation.navigate('Environments');
     }
   };
 

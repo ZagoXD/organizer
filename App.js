@@ -11,6 +11,7 @@ import HomeScreen from './screens/HomeScreen';
 import { BoxProvider } from './context/BoxContext';
 import BoxDetailsScreen from './screens/BoxDetailsScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import EnvironmentScreen from './screens/EnvironmentScreen';
 
 const Stack = createStackNavigator();
 
@@ -22,8 +23,9 @@ export default function App() {
           <Stack.Navigator initialRouteName="Login">
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Registrar' }} />
-            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
-            <Stack.Screen name="BoxDetails" component={BoxDetailsScreen} options={{ title: 'Detalhes da Caixa' }} />
+            <Stack.Screen name="Environments" component={EnvironmentScreen} options={{ title: 'Ambientes' }} />
+            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Compartimentos' }} />
+            <Stack.Screen name="BoxDetails" component={BoxDetailsScreen} options={{ title: 'Detalhes do Compartimento' }} />
           </Stack.Navigator>
         </NavigationContainer>
       </BoxProvider>

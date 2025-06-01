@@ -1,69 +1,118 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, TouchableOpacity, Modal, StyleSheet, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal, TextInput, Button, Alert } from 'react-native';
 import { supabase } from '../supabase';
 
 export default function EnvironmentScreen({ navigation }) {
   const [environments, setEnvironments] = useState([]);
   const [newEnvironmentName, setNewEnvironmentName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-
-  // Carrega os ambientes do usuário logado
-  const fetchEnvironments = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const { data, error } = await supabase
-        .from('ambientes')
-        .select('*')
-        .eq('user_id', session.user.id);
-      if (error) console.error('Erro ao buscar ambientes:', error.message);
-      else setEnvironments(data);
-    }
-  };
+  const [loading, setLoading] = useState(false); // Adiciona o estado de loading para evitar múltiplos cliques
 
   useEffect(() => {
     fetchEnvironments();
   }, []);
 
-  const handleCreateEnvironment = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (newEnvironmentName.trim() && session) {
-      const { error } = await supabase
-        .from('ambientes')
-        .insert([{ name: newEnvironmentName, user_id: session.user.id }]);
-      if (error) {
-        Alert.alert('Erro', 'Erro ao criar ambiente');
-      } else {
-        fetchEnvironments(); // Atualiza a lista de ambientes
-        setNewEnvironmentName('');
-        setModalVisible(false);
+  // Função para carregar os ambientes
+  const fetchEnvironments = async () => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
+        return;
       }
+
+      const { data: environmentData, error: environmentError } = await supabase
+        .from('environments')
+        .select('id, name')
+        .eq('user_id', user.id);
+
+      if (environmentError) {
+        console.error('Erro ao carregar ambientes:', environmentError.message);
+        return;
+      }
+
+      setEnvironments(environmentData || []); // Atualiza a lista de ambientes
+    } catch (error) {
+      console.error('Erro inesperado ao carregar ambientes:', error);
     }
   };
 
-  const handleSelectEnvironment = (environment) => {
-    navigation.navigate('Home', { environmentId: environment.id }); // Passa o environmentId corretamente
+  // Função para adicionar um novo ambiente
+  const addEnvironment = async () => {
+    if (!newEnvironmentName.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um nome para o ambiente.');
+      return;
+    }
+
+    setLoading(true); // Ativa o loading para evitar múltiplos cliques
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Erro ao obter o usuário:', userError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('environments')
+        .insert([{ name: newEnvironmentName, user_id: user.id }])
+        .select();  // Adiciona .select() para garantir que o ambiente recém-criado seja retornado
+
+      if (error) {
+        console.error('Erro ao criar ambiente:', error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Verifica se os dados foram retornados corretamente
+      if (data && data.length > 0) {
+        const newEnvironment = data[0];
+        setEnvironments([...environments, newEnvironment]); // Atualiza a lista de ambientes com o novo ambiente
+      } else {
+        console.error('Nenhum ambiente foi retornado após a inserção.');
+      }
+
+      // Limpa o campo de texto e fecha o modal
+      setNewEnvironmentName('');
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Erro inesperado ao adicionar ambiente:', error);
+    } finally {
+      setLoading(false); // Desativa o loading
+    }
   };
+
+  const selectEnvironment = (environment) => {
+    navigation.navigate('Home', { environmentId: environment.id }); // Certifique-se de passar o environmentId aqui
+  };
+
+  const renderEnvironment = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.environmentItem} 
+      onPress={() => selectEnvironment(item)}
+    >
+      <Text style={styles.environmentName}>{item.name}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       <FlatList
         data={environments}
+        renderItem={renderEnvironment}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.environmentItem} onPress={() => handleSelectEnvironment(item)}>
-            <Text style={styles.environmentText}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum ambiente criado.</Text>}
+        ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
       />
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>Adicionar Ambiente</Text>
-      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}> 
+        <Text  style={styles.addButtonText}>Criar Ambiente</Text> 
+      </TouchableOpacity> 
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Criar Novo Ambiente</Text>
+          <View style={styles.modalView}> 
             <TextInput
               style={styles.input}
               placeholder="Nome do ambiente"
@@ -71,11 +120,11 @@ export default function EnvironmentScreen({ navigation }) {
               onChangeText={setNewEnvironmentName}
               placeholderTextColor="gray"
             />
-            <Button title="Criar" onPress={handleCreateEnvironment} />
-            <Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" />
+            <Button title={loading ? "Criando..." : "Criar"} onPress={addEnvironment} disabled={loading} />
+            <View style={styles.cancelBtnCreateEnv}><Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" /></View>
           </View>
-        </View>
-      </Modal>
+        </View> 
+      </Modal> 
     </View>
   );
 }
@@ -85,14 +134,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  cancelBtnCreateEnv: {
+    marginTop: 10,
+  },
   environmentItem: {
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#eaeaea',
     borderRadius: 5,
     marginBottom: 10,
   },
-  environmentText: {
+  environmentName: {
     fontSize: 18,
   },
   addButton: {
@@ -100,36 +151,29 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 20,
   },
   addButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 18,
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
-    width: '85%',
-    padding: 35,
+    width: '80%',
     backgroundColor: 'white',
+    padding: 20,
     borderRadius: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
+    elevation: 5,
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
     borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    padding: 10,
+    marginBottom: 10,
   },
 });

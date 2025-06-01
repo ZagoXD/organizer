@@ -1,107 +1,107 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal, TextInput, Button } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { StyleSheet, Text, View, FlatList, Modal, TextInput, Button, TouchableOpacity, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 
 export default function BoxDetailsScreen({ route }) {
-  const { boxName } = route.params;
-  const { boxes, addItemToBox, updateItemInBox, removeItemFromBox } = useContext(BoxContext); // Adiciona a função removeItemFromBox
+  const { boxId } = route.params; 
+  const { addItemToBox, updateItemInBox, removeItemFromBox } = useContext(BoxContext);
   const [items, setItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemQuantity, setNewItemQuantity] = useState('');
   const [editingItem, setEditingItem] = useState(null);
 
+  // Função para buscar os itens da caixa
   const fetchItems = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
       return;
     }
-  
-    const { data: boxData, error: boxError } = await supabase
-      .from('caixas')
-      .select('id')
-      .eq('name', boxName)
-      .eq('user_id', user.id) // Certifica-se de buscar a caixa do usuário
-      .maybeSingle();  // Substitua por maybeSingle para evitar o erro de múltiplos resultados
-  
-    if (boxError) {
-      console.error('Erro ao buscar o ID da caixa:', boxError.message);
+
+    if (!boxId) {
+      console.error('boxId está indefinido');
       return;
     }
-  
-    if (!boxData) {
-      console.error('Caixa não encontrada ou múltiplas caixas retornadas');
-      return;
-    }
-  
-    const boxId = boxData.id;
-  
-    // Buscar os itens da caixa
+
+    // Buscar os itens da caixa usando o boxId
     const { data: itemData, error: itemError } = await supabase
       .from('itens')
       .select('*')
       .eq('box_id', boxId);
-  
+
     if (itemError) {
       console.error('Erro ao carregar itens:', itemError.message);
     } else {
       setItems(itemData);
     }
   };
-  
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [boxId]);
 
+  // Função para salvar item (adicionar ou editar)
   const saveItem = async () => {
-    if (newItemName && newItemQuantity) {
-      if (editingItem !== null) {
-        const updatedItem = {
-          originalName: editingItem.name,
-          name: newItemName,
-          quantity: newItemQuantity,
-        };
-  
-        await updateItemInBox(boxName, updatedItem);
-
-        setItems(items.map(item => 
-          item.name === editingItem.name 
-            ? { name: newItemName, quantity: newItemQuantity }
-            : item
-        ));
-      } else {
-
+    try {
+      if (newItemName && newItemQuantity) {
         const newItem = { name: newItemName, quantity: newItemQuantity };
   
-        await addItemToBox(boxName, newItem)
+        if (editingItem) {
+          const updatedItem = {
+            originalName: editingItem.name,  
+            name: newItemName,
+            quantity: newItemQuantity
+          };
+          
+          const success = await updateItemInBox(boxId, updatedItem);
+          
+          if (!success) {
+            Alert.alert('Erro', 'Não foi possível atualizar o item.');
+            return;
+          }
 
-        setItems([...items, newItem]);
+          setItems(items.map(item => item.name === editingItem.name ? updatedItem : item));
+          
+          setEditingItem(null); 
+        } else {
+          const success = await addItemToBox(boxId, newItem);
+    
+          if (!success) {
+            Alert.alert("Erro", "Um item com este nome já existe neste container");
+            return;
+          }
+    
+          setItems([...items, newItem]);
+        }
+  
+        // Resetando os campos e fechando o modal
+        setNewItemName('');
+        setNewItemQuantity('');
+        setModalVisible(false);
       }
-
-      setNewItemName('');
-      setNewItemQuantity('');
-      setEditingItem(null);
-      setModalVisible(false);
+    } catch (error) {
+      console.error('Erro ao salvar o item:', error.message);
     }
   };
-
-  const removeItem = (item) => {
-    removeItemFromBox(boxName, item.name);
-    setItems(items.filter(i => i.name !== item.name)); 
+  
+  // Função para remover um item
+  const removeItem = async (item) => {
+    await removeItemFromBox(boxId, item.name);
+    setItems(items.filter(i => i.name !== item.name));
   };
 
+  // Função para editar um item
   const editItem = (item) => {
     setNewItemName(item.name);
     setNewItemQuantity(item.quantity);
-    setEditingItem(item);
+    setEditingItem(item);  
     setModalVisible(true);
   };
-
+  
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemInfo}>
@@ -121,7 +121,7 @@ export default function BoxDetailsScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{boxName}</Text>
+      <Text style={styles.title}>Detalhes do compartimento</Text>
 
       <FlatList
         data={items}
@@ -131,7 +131,10 @@ export default function BoxDetailsScreen({ route }) {
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item adicionado ainda.</Text>}
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={styles.addButton} onPress={() => {
+        setEditingItem(null); 
+        setModalVisible(true);
+      }}>
         <Text style={styles.addButtonText}>Adicionar Item</Text>
       </TouchableOpacity>
 

@@ -1,259 +1,324 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { supabase } from '../supabase';  // Certifique-se de que o arquivo Supabase esteja configurado
+import { supabase } from '../supabase';  
 
 export const BoxContext = createContext();
 
 export const BoxProvider = ({ children }) => {
   const [boxes, setBoxes] = useState({});
 
-  // Função para carregar as caixas do Supabase ao iniciar
-  const fetchBoxes = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
-        return;
-      }
-  
-      const { data: boxData, error: boxError } = await supabase
-        .from('caixas')
-        .select('id, name')
-        .eq('user_id', user.id);
-  
-      if (boxError) {
-        console.error('Erro ao carregar caixas:', boxError.message);
-      } else {
-        const loadedBoxes = {};
-        for (let box of boxData) {
-          const { data: itemsData, error: itemsError } = await supabase
-            .from('itens')
-            .select('name, quantity')
-            .eq('box_id', box.id);
-  
-          if (itemsError) {
-            console.error(`Erro ao carregar itens da caixa ${box.name}:`, itemsError.message);
-          } else {
-            loadedBoxes[box.name] = itemsData || [];
-          }
-        }
-        setBoxes(loadedBoxes);
-      }
-    } catch (error) {
-      console.error('Erro inesperado ao carregar caixas:', error.message);
-    }
-  };
-  
-
-  // Função para adicionar uma nova caixa
-  const addBox = async (boxName) => {
+// Função para carregar as caixas associadas ao environmentId
+const fetchBoxes = async (environmentId) => {
+  try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-    if (userError) {
-      console.error('Erro ao obter o usuário:', userError.message);
+    if (userError || !user) {
+      console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
       return;
     }
-  
-    const { data, error } = await supabase
-      .from('caixas')
-      .insert([{ 
-        name: boxName,
-        user_id: user.id // Associar a caixa ao user_id
-      }]);
-  
-    if (error) {
-      console.error('Erro ao adicionar a caixa:', error.message);
-    } else {
-      setBoxes(prevBoxes => ({
-        ...prevBoxes,
-        [boxName]: [] // Adiciona a nova caixa ao estado
-      }));
-    }
-  };
-  
 
-  const removeBox = async (boxName) => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-    if (userError) {
-      console.error('Erro ao obter o usuário:', userError.message);
-      return;
-    }
-  
-    // Buscar o ID da caixa pelo nome e user_id
+    // Buscar caixas associadas ao usuário e ao ambiente
     const { data: boxData, error: boxError } = await supabase
       .from('caixas')
-      .select('id')
-      .eq('name', boxName)
-      .eq('user_id', user.id) // Certificar-se de buscar a caixa correta
-      .maybeSingle();  // Substitua por maybeSingle
-  
+      .select('id, name')
+      .eq('user_id', user.id)
+      .eq('environment_id', environmentId); 
+
     if (boxError) {
-      console.error('Erro ao buscar o ID da caixa:', boxError.message);
-      return;
-    }
-  
-    if (!boxData) {
-      console.error('Caixa não encontrada ou múltiplas caixas retornadas');
-      return;
-    }
-  
-    const boxId = boxData.id;
-  
-    // Remover a caixa
-    const { error: deleteError } = await supabase
-      .from('caixas')
-      .delete()
-      .eq('id', boxId)
-      .eq('user_id', user.id);
-  
-    if (deleteError) {
-      console.error('Erro ao remover a caixa no Supabase:', deleteError.message);
+      console.error('Erro ao carregar caixas:', boxError.message);
+    } else if (boxData.length > 0) {
+      const loadedBoxes = {};
+      
+      // Para cada caixa, buscar seus itens
+      for (const box of boxData) {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('itens')
+          .select('*')
+          .eq('box_id', box.id);
+
+        if (itemsError) {
+          console.error('Erro ao carregar itens da caixa:', itemsError.message);
+          loadedBoxes[box.id] = { name: box.name, items: [] }; // Caixa sem itens
+        } else {
+          loadedBoxes[box.id] = { name: box.name, items: itemsData }; // Caixa com itens
+        }
+      }
+
+      setBoxes(loadedBoxes);
     } else {
-      setBoxes(prevBoxes => {
-        const updatedBoxes = { ...prevBoxes };
-        delete updatedBoxes[boxName];
-        return updatedBoxes;
-      });
+      console.log('Nenhuma caixa foi encontrada para este ambiente');
+      setBoxes({});
     }
-  };
+  } catch (error) {
+    console.error('Erro inesperado ao carregar caixas:', error.message);
+  }
+};
+
+const removeEnvironment = async (environmentId) => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error('Erro ao obter o usuário:', userError.message);
+    return;
+  }
+
+  // Verificar se há containers associados ao ambiente
+  const { data: boxes, error: boxesError } = await supabase
+    .from('caixas')
+    .select('id')
+    .eq('environment_id', environmentId)
+    .eq('user_id', user.id);
+
+  if (boxesError) {
+    console.error('Erro ao verificar containers no ambiente:', boxesError.message);
+    return;
+  }
+
+  if (boxes.length > 0) {
+
+    Alert.alert(
+      "Erro",
+      "Não é possível excluir o ambiente. Exclua todos os containers antes de remover o ambiente.",
+      [{ text: "OK" }]
+    );
+    return;  
+  }
+
+  const { error: deleteError } = await supabase
+    .from('environments')
+    .delete()
+    .eq('id', environmentId)
+    .eq('user_id', user.id);
+
+  if (deleteError) {
+    console.error('Erro ao excluir o ambiente no Supabase:', deleteError.message);
+  } else {
+    setEnvironments(prevEnvironments => prevEnvironments.filter(env => env.id !== environmentId));
+  }
+};
+
   
-  
+const addBox = async (boxName, environmentId) => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error('Erro ao obter o usuário:', userError.message);
+    return;
+  }
+
+  const { data: existingBox, error: existingError } = await supabase
+    .from('caixas')
+    .select('id')
+    .eq('name', boxName)
+    .eq('user_id', user.id)
+    .eq('environment_id', environmentId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error('Erro ao verificar se a caixa já existe:', existingError.message);
+    return;
+  }
+
+  if (existingBox) {
+    console.error('Caixa já existe neste ambiente para este usuário');
+    return;
+  }
+
+  // Inserir a nova caixa
+  const { data, error } = await supabase
+    .from('caixas')
+    .insert([{ 
+      name: boxName,
+      user_id: user.id,
+      environment_id: environmentId
+    }])
+    .select();
+
+  if (error) {
+    console.error('Erro ao adicionar a caixa:', error.message);
+  } else {
+    setBoxes(prevBoxes => ({
+      ...prevBoxes,
+      [boxName]: []
+    }));
+  }
+};
+
+
+const removeBox = async (boxId, environmentId) => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error('Erro ao obter o usuário:', userError.message);
+    return;
+  }
+
+  if (!boxes[boxId]) {
+    console.error('Erro: container não encontrado no estado');
+    return;
+  }
+
+  const { error: deleteItemsError } = await supabase
+    .from('itens')
+    .delete()
+    .eq('box_id', boxId);
+
+  if (deleteItemsError) {
+    console.error('Erro ao remover os itens associados:', deleteItemsError.message);
+    return;
+  }
+
+  const { error: deleteBoxError } = await supabase
+    .from('caixas')
+    .delete()
+    .eq('id', boxId)
+    .eq('user_id', user.id);
+
+  if (deleteBoxError) {
+    console.error('Erro ao remover a caixa no Supabase:', deleteBoxError.message);
+  } else {
+    setBoxes(prevBoxes => {
+      const updatedBoxes = { ...prevBoxes };
+      delete updatedBoxes[boxId];
+      return updatedBoxes;
+    });
+  }
+};
 
   // Função para adicionar um item a uma caixa
-  const addItemToBox = async (boxName, newItem) => {
+  const addItemToBox = async (boxId, newItem) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
   
     if (userError) {
       console.error('Erro ao obter o usuário:', userError.message);
-      return;
+      return false; 
     }
-  
-    // Busca o ID da caixa com base no nome e user_id
-    const { data: boxData, error: boxError } = await supabase
-      .from('caixas')
+
+    if (!boxId) {
+      console.error('Erro: boxId está indefinido');
+      return false
+    }
+
+    const { data: existingItem, error: existingError } = await supabase
+      .from('itens')
       .select('id')
-      .eq('name', boxName)
-      .eq('user_id', user.id) // Certifica que estamos buscando a caixa do usuário correto
+      .eq('box_id', boxId)
+      .eq('name', newItem.name)
       .single();
   
-    if (boxError) {
-      console.error('Erro ao buscar ID da caixa:', boxError.message);
-      return;
+    if (existingError && existingError.code !== 'PGRST116') { // PGRST116 indica que nenhum item foi encontrado
+      console.error('Erro ao verificar item duplicado:', existingError.message);
+      return false;
     }
   
-    const boxId = boxData.id;
-  
-    // Inserir o item na caixa
+    if (existingItem) {
+      return false; 
+    }
+ 
     const { error: insertError } = await supabase
       .from('itens')
       .insert([{ 
-        box_id: boxId,
+        box_id: boxId, 
         name: newItem.name,
         quantity: newItem.quantity
       }]);
   
     if (insertError) {
       console.error('Erro ao adicionar item:', insertError.message);
+      return false; 
     } else {
+
       setBoxes(prevBoxes => ({
         ...prevBoxes,
-        [boxName]: [...prevBoxes[boxName], newItem]
+        [boxId]: {
+          ...prevBoxes[boxId],
+          items: [...prevBoxes[boxId].items, newItem]
+        }
       }));
+      return true; 
     }
-  };
-  
+  };  
 
-  // Função para atualizar um item na caixa
-  const updateItemInBox = async (boxName, updatedItem) => {
+  const updateItemInBox = async (boxId, updatedItem) => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+      if (userError) {
+        console.error('Erro ao obter o usuário:', userError.message);
+        return false; 
+      }
+    
+      if (!boxId) {
+        console.error('Erro: boxId está indefinido');
+        return false; 
+      }
+    
+      // Atualiza o item no banco de dados
+      const { error: updateError } = await supabase
+        .from('itens')
+        .update({
+          name: updatedItem.name,
+          quantity: updatedItem.quantity
+        })
+        .eq('box_id', boxId)
+        .eq('name', updatedItem.originalName); 
+    
+      if (updateError) {
+        console.error('Erro ao atualizar o item:', updateError.message);
+        return false; 
+      }
+    
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar o item:', error.message);
+      return false;
+    }
+  };  
+
+  // Função para remover um item de uma caixa
+  const removeItemFromBox = async (boxId, itemName) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
   
     if (userError) {
       console.error('Erro ao obter o usuário:', userError.message);
       return;
     }
-  
-    // Busca o ID da caixa com base no nome e user_id
-    const { data: boxData, error: boxError } = await supabase
-      .from('caixas')
+    if (!boxId) {
+      console.error('Erro: boxId está indefinido');
+      return;
+    }
+
+    const { data: itemData, error: itemError } = await supabase
+      .from('itens')
       .select('id')
-      .eq('name', boxName)
-      .eq('user_id', user.id) // Certifica que estamos atualizando o item da caixa correta
-      .single();
+      .eq('box_id', boxId)
+      .eq('name', itemName)
+      .single(); 
   
-    if (boxError || !boxData) {
-      console.error('Erro ao buscar o ID da caixa:', boxError?.message || 'Caixa não encontrada');
+    if (itemError || !itemData) {
+      console.error('Erro ao buscar o item:', itemError?.message || 'Item não encontrado');
       return;
     }
   
-    const boxId = boxData.id;
-  
-    // Atualiza o item na caixa
-    const { error: updateError } = await supabase
+    const itemId = itemData.id;
+
+    const { error: deleteError } = await supabase
       .from('itens')
-      .update({
-        name: updatedItem.name,
-        quantity: updatedItem.quantity
-      })
-      .eq('box_id', boxId)
-      .eq('name', updatedItem.originalName);  
+      .delete()
+      .eq('id', itemId);
   
-    if (updateError) {
-      console.error('Erro ao atualizar o item no Supabase:', updateError.message);
+    if (deleteError) {
+      console.error('Erro ao remover o item:', deleteError.message);
     } else {
+      // Atualize o estado local para remover o item do array de itens da caixa
       setBoxes(prevBoxes => ({
         ...prevBoxes,
-        [boxName]: prevBoxes[boxName].map(item =>
-          item.name === updatedItem.originalName
-            ? { name: updatedItem.name, quantity: updatedItem.quantity }
-            : item
-        )
+        [boxId]: {
+          ...prevBoxes[boxId],
+          items: prevBoxes[boxId].items.filter(item => item.name !== itemName)
+        }
       }));
     }
   };
-
-  // Função para remover um item de uma caixa
-  const removeItemFromBox = async (boxName, itemName) => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-      if (userError) {
-        console.error('Erro ao obter o usuário:', userError.message);
-        return;
-      }
-
-      const { data: boxData, error: boxError } = await supabase
-        .from('caixas')
-        .select('id')
-        .eq('name', boxName)
-        .eq('user_id', user.id)
-        .single();
-  
-      if (boxError || !boxData) {
-        console.error('Erro ao buscar o ID da caixa:', boxError?.message || 'Caixa não encontrada');
-        return;
-      }
-  
-      const boxId = boxData.id;
-  
-      // Remove o item
-      const { error: deleteError } = await supabase
-        .from('itens')
-        .delete()
-        .eq('box_id', boxId)
-        .eq('name', itemName); 
-  
-      if (deleteError) {
-        console.error('Erro ao remover o item no Supabase:', deleteError.message);
-      } else {
-        setBoxes(prevBoxes => ({
-          ...prevBoxes,
-          [boxName]: prevBoxes[boxName].filter(item => item.name !== itemName)
-        }));
-      }
-    } catch (error) {
-      console.error('Erro inesperado ao remover item:', error.message);
-    }
-  };
 
   return (
     <BoxContext.Provider value={{ boxes, addBox, removeBox, addItemToBox, updateItemInBox, removeItemFromBox, fetchBoxes }}>

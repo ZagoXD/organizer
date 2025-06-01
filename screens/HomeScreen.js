@@ -3,92 +3,95 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, B
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 
-export default function HomeScreen({ navigation }) {
-  const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext); 
+export default function HomeScreen({ route, navigation }) {
+  const { environmentId } = route.params || {}; 
+  const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext);
   const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [newBoxName, setNewBoxName] = useState('');
 
-  // Função para filtrar caixas com base na pesquisa de objetos
+  useEffect(() => {
+    if (environmentId) {
+      fetchBoxes(environmentId);
+    } else {
+      setBoxes({});
+    }
+  }, [environmentId]);
+  
   const filterBoxesBySearch = () => {
     if (!search.trim()) {
       return Object.keys(boxes);
     }
   
-    // Filtra caixas que contêm itens cujo nome corresponde ao termo de pesquisa
     return Object.keys(boxes).filter(boxName =>
-      boxes[boxName].some(item =>
+      boxes[boxName] && Array.isArray(boxes[boxName].items) && // Verifica se items é um array
+      boxes[boxName].items.some(item =>
         item.name.toLowerCase().includes(search.toLowerCase())
       )
     );
   };
+  
 
-  useEffect(() => {
-    fetchBoxes();
-  }, []);
-
-  const handleRemoveBox = async (boxName) => {
+  const handleRemoveBox = async (boxId) => {
     try {
-      const boxItems = boxes[boxName];
-      if (boxItems.length > 0) {
-        Alert.alert(
-          "Erro",
-          "Não é possível excluir um container com itens nele. Reorganize ou remova os itens antes de excluir.",
-          [{ text: "OK" }]
-        );
-      } else {
-        await removeBox(boxName); // Remover a caixa se ela estiver vazia
-      }
+      // Verifica se o container está vazio e tenta removê-lo
+      await removeBox(boxId, environmentId);
     } catch (error) {
       console.error("Erro ao tentar remover a caixa:", error);
     }
   };
 
+  const boxList = filterBoxesBySearch().map(boxId => ({
+    id: boxId,
+    name: boxes[boxId].name,
+    items: boxes[boxId].items,
+  }));
+
   const renderItem = ({ item }) => (
     <View style={styles.boxContainer}>
-      <TouchableOpacity 
-        style={styles.boxItem} 
-        onPress={() => navigation.navigate('BoxDetails', { boxName: item })}
+      <TouchableOpacity
+        style={styles.boxItem}
+        onPress={() => navigation.navigate('BoxDetails', { boxId: item.id })} 
       >
-        <Text style={styles.boxText}>{item}</Text>
+        <Text style={styles.boxText}>{item.name}</Text>
       </TouchableOpacity>
-      <View style={styles.boxActions}>
-        <TouchableOpacity onPress={() => handleRemoveBox(item)}> 
-          <Icon name="delete" size={24} color="red" />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={() => handleRemoveBox(item.id)}>
+        <Icon name="delete" size={24} color="red" />
+      </TouchableOpacity>
     </View>
   );
+  
 
-  const handleAddBox = () => {
+  const handleAddBox = async () => {
     if (newBoxName.trim()) {
-      addBox(newBoxName);
+      await addBox(newBoxName, environmentId);  
+
+      fetchBoxes(environmentId);
       setNewBoxName('');
-      setModalVisible(false); 
+      setModalVisible(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <TextInput 
-          style={styles.searchInput} 
-          placeholder="Pesquisar objeto" 
-          value={search} 
-          onChangeText={setSearch} 
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Pesquisar objeto"
+          value={search}
+          onChangeText={setSearch}
         />
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-          <Icon name="add" size={24} color="red" />
-        </TouchableOpacity>
       </View>
 
       <FlatList
-        data={filterBoxesBySearch()}
+        data={boxList}
         renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
-        style={styles.boxList}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum container encontrado.</Text>}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
       />
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.addButtonText}>Adicionar Compartimento</Text>
+      </TouchableOpacity>
 
       <Modal
         animationType="slide"
@@ -98,15 +101,15 @@ export default function HomeScreen({ navigation }) {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Novo Container</Text>
+            <Text style={styles.modalTitle}>Adicionar Novo Compartimento</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nome do container"
+              placeholder="Nome do compartimento"
               value={newBoxName}
               onChangeText={setNewBoxName}
               placeholderTextColor="gray"
             />
-            <Button title="Adicionar Container" onPress={handleAddBox} />
+            <Button title="Adicionar Compartimento" onPress={handleAddBox} />
             <View style={styles.cancelBtnCreateBox}><Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} /></View>
           </View>
         </View>
@@ -136,6 +139,14 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginLeft: 10,
+    padding: 15,
+    backgroundColor: '#5db55b',
+    alignItems: 'center',
+    borderRadius: 5,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 18,
   },
   boxList: {
     marginTop: 20,
@@ -156,11 +167,6 @@ const styles = StyleSheet.create({
   },
   boxText: {
     fontSize: 18,
-  },
-  boxActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: 60,
   },
   emptyText: {
     textAlign: 'center',
