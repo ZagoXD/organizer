@@ -4,7 +4,7 @@ import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 
 export default function HomeScreen({ route, navigation }) {
-  const { environmentId } = route.params || {}; 
+  const { environmentId } = route.params || {};
   const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext);
   const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -17,12 +17,12 @@ export default function HomeScreen({ route, navigation }) {
       setBoxes({});
     }
   }, [environmentId]);
-  
+
   const filterBoxesBySearch = () => {
     if (!search.trim()) {
       return Object.keys(boxes);
     }
-  
+
     return Object.keys(boxes).filter(boxName =>
       boxes[boxName] && Array.isArray(boxes[boxName].items) && // Verifica se items é um array
       boxes[boxName].items.some(item =>
@@ -30,15 +30,26 @@ export default function HomeScreen({ route, navigation }) {
       )
     );
   };
-  
 
-  const handleRemoveBox = async (boxId) => {
-    try {
-      // Verifica se o container está vazio e tenta removê-lo
-      await removeBox(boxId, environmentId);
-    } catch (error) {
-      console.error("Erro ao tentar remover a caixa:", error);
-    }
+  const handleRemoveBox = (boxId) => {
+    Alert.alert(
+      "Confirmação",
+      "Tem certeza que deseja excluir este compartimento? Todos seus objetos serão perdidos",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await removeBox(boxId, environmentId);
+            } catch (error) {
+              console.error("Erro ao tentar remover a caixa:", error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const boxList = filterBoxesBySearch().map(boxId => ({
@@ -51,7 +62,7 @@ export default function HomeScreen({ route, navigation }) {
     <View style={styles.boxContainer}>
       <TouchableOpacity
         style={styles.boxItem}
-        onPress={() => navigation.navigate('BoxDetails', { boxId: item.id })} 
+        onPress={() => navigation.navigate('BoxDetails', { boxId: item.id })}
       >
         <Text style={styles.boxText}>{item.name}</Text>
       </TouchableOpacity>
@@ -60,11 +71,11 @@ export default function HomeScreen({ route, navigation }) {
       </TouchableOpacity>
     </View>
   );
-  
+
 
   const handleAddBox = async () => {
     if (newBoxName.trim()) {
-      await addBox(newBoxName, environmentId);  
+      await addBox(newBoxName, environmentId);
 
       fetchBoxes(environmentId);
       setNewBoxName('');
