@@ -77,8 +77,7 @@ export default function BoxDetailsScreen({ route }) {
     
           setItems([...items, newItem]);
         }
-  
-        // Resetando os campos e fechando o modal
+
         setNewItemName('');
         setNewItemQuantity('');
         setModalVisible(false);

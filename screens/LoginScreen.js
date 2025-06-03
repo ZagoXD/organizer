@@ -12,10 +12,9 @@ export default function LoginScreen({ navigation }) {
     "Email already registered": "E-mail já registrado",
     "Password should be at least 6 characters": "A senha deve ter pelo menos 6 caracteres",
     "User not confirmed": "Usuário não confirmado",
-    //
   };
 
-    // Verifica se há uma sessão ativa ao montar o componente
+    // Manter login, ainda não funciona
     useEffect(() => {
       const checkSession = async () => {
         const { data: { session } } = await supabase.auth.getSession();

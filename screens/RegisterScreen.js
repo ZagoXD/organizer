@@ -12,7 +12,6 @@ export default function RegisterScreen({ navigation }) {
     "User already registered": "usuario já registrado",
     "Password should be at least 6 characters.": "A senha deve ter pelo menos 6 caracteres",
     "Passwords do not match": "As senhas não coincidem",
-    //
   };
 
   const handleRegister = async () => {

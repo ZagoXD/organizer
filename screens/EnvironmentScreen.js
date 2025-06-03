@@ -6,7 +6,7 @@ export default function EnvironmentScreen({ navigation }) {
   const [environments, setEnvironments] = useState([]);
   const [newEnvironmentName, setNewEnvironmentName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false); // Adiciona o estado de loading para evitar múltiplos cliques
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchEnvironments();
@@ -32,7 +32,7 @@ export default function EnvironmentScreen({ navigation }) {
         return;
       }
 
-      setEnvironments(environmentData || []); // Atualiza a lista de ambientes
+      setEnvironments(environmentData || []); 
     } catch (error) {
       console.error('Erro inesperado ao carregar ambientes:', error);
     }
@@ -45,7 +45,7 @@ export default function EnvironmentScreen({ navigation }) {
       return;
     }
 
-    setLoading(true); // Ativa o loading para evitar múltiplos cliques
+    setLoading(true); 
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -58,7 +58,7 @@ export default function EnvironmentScreen({ navigation }) {
       const { data, error } = await supabase
         .from('environments')
         .insert([{ name: newEnvironmentName, user_id: user.id }])
-        .select();  // Adiciona .select() para garantir que o ambiente recém-criado seja retornado
+        .select(); //garante ambiente novo de ser carregado
 
       if (error) {
         console.error('Erro ao criar ambiente:', error.message);
@@ -69,7 +69,7 @@ export default function EnvironmentScreen({ navigation }) {
       // Verifica se os dados foram retornados corretamente
       if (data && data.length > 0) {
         const newEnvironment = data[0];
-        setEnvironments([...environments, newEnvironment]); // Atualiza a lista de ambientes com o novo ambiente
+        setEnvironments([...environments, newEnvironment]); 
       } else {
         console.error('Nenhum ambiente foi retornado após a inserção.');
       }
@@ -80,12 +80,12 @@ export default function EnvironmentScreen({ navigation }) {
     } catch (error) {
       console.error('Erro inesperado ao adicionar ambiente:', error);
     } finally {
-      setLoading(false); // Desativa o loading
+      setLoading(false); 
     }
   };
 
   const selectEnvironment = (environment) => {
-    navigation.navigate('Home', { environmentId: environment.id }); // Certifique-se de passar o environmentId aqui
+    navigation.navigate('Home', { environmentId: environment.id }); 
   };
 
   const renderEnvironment = ({ item }) => (
