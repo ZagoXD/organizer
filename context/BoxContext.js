@@ -19,9 +19,8 @@ export const BoxProvider = ({ children }) => {
       // Buscar caixas associadas ao usuário e ao ambiente
       const { data: boxData, error: boxError } = await supabase
         .from('caixas')
-        .select('id, name')
-        .eq('user_id', user.id)
-        .eq('environment_id', environmentId);
+        .select('id, name, environment_id')
+        .eq('environment_id', environmentId)
 
       if (boxError) {
         console.error('Erro ao carregar caixas:', boxError.message);
@@ -107,46 +106,71 @@ export const BoxProvider = ({ children }) => {
   const removeEnvironment = async (environmentId) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (userError) {
-      console.error('Erro ao obter o usuário:', userError.message);
+    if (userError || !user) {
+      console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
       return false;
     }
 
-    const { data: boxes, error: boxesError } = await supabase
-      .from('caixas')
-      .select('id')
-      .eq('environment_id', environmentId)
-      .eq('user_id', user.id);
-
-    if (boxesError) {
-      console.error('Erro ao verificar containers no ambiente:', boxesError.message);
-      return false;
-    }
-
-    if (boxes.length > 0) {
-      Alert.alert(
-        "Erro",
-        "Não é possível excluir o ambiente. Exclua todos os containers antes de remover o ambiente.",
-        [{ text: "OK" }]
-      );
-      return false;
-    }
-
-    const { error: deleteError } = await supabase
+    // Verifica se o usuário é o dono do ambiente
+    const { data: envData, error: envError } = await supabase
       .from('environments')
-      .delete()
+      .select('user_id')
       .eq('id', environmentId)
-      .eq('user_id', user.id);
+      .single();
 
-    if (deleteError) {
-      console.error('Erro ao excluir o ambiente no Supabase:', deleteError.message);
+    if (envError) {
+      console.error('Erro ao verificar dono do ambiente:', envError.message);
       return false;
     }
 
-    return true;
+    if (envData.user_id === user.id) {
+      const { data: boxes, error: boxesError } = await supabase
+        .from('caixas')
+        .select('id')
+        .eq('environment_id', environmentId)
+        .eq('user_id', user.id);
+
+      if (boxesError) {
+        console.error('Erro ao verificar caixas no ambiente:', boxesError.message);
+        return false;
+      }
+
+      if (boxes.length > 0) {
+        Alert.alert(
+          "Erro",
+          "Não é possível excluir o ambiente. Exclua todos os compartimentos antes de remover o ambiente.",
+          [{ text: "OK" }]
+        );
+        return false;
+      }
+
+      const { error: deleteError } = await supabase
+        .from('environments')
+        .delete()
+        .eq('id', environmentId)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Erro ao excluir o ambiente:', deleteError.message);
+        return false;
+      }
+
+      return true;
+    } else {
+      const { error: shareDeleteError } = await supabase
+        .from('environment_shares')
+        .delete()
+        .eq('environment_id', environmentId)
+        .eq('shared_with_user_email', user.email);
+
+      if (shareDeleteError) {
+        console.error('Erro ao remover compartilhamento:', shareDeleteError.message);
+        return false;
+      }
+
+      return true;
+    }
   };
-
-
 
   const addBox = async (boxName, environmentId) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -221,8 +245,7 @@ export const BoxProvider = ({ children }) => {
     const { error: deleteBoxError } = await supabase
       .from('caixas')
       .delete()
-      .eq('id', boxId)
-      .eq('user_id', user.id);
+      .eq('id', boxId);
 
     if (deleteBoxError) {
       console.error('Erro ao remover a caixa no Supabase:', deleteBoxError.message);

@@ -5,7 +5,7 @@ import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 
 export default function BoxDetailsScreen({ route }) {
-  const { boxId } = route.params; 
+  const { boxId } = route.params;
   const { addItemToBox, updateItemInBox, removeItemFromBox } = useContext(BoxContext);
   const [items, setItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -27,7 +27,6 @@ export default function BoxDetailsScreen({ route }) {
       return;
     }
 
-    // Buscar os itens da caixa usando o boxId
     const { data: itemData, error: itemError } = await supabase
       .from('itens')
       .select('*')
@@ -40,41 +39,65 @@ export default function BoxDetailsScreen({ route }) {
     }
   };
 
+
   useEffect(() => {
     fetchItems();
   }, [boxId]);
+
+  useEffect(() => {
+    if (boxId) {
+      fetchItems();
+
+      const subscription = supabase
+        .channel('items_channel')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'itens'
+        }, payload => {
+          console.log('Nova mudança de item:', payload);
+          fetchItems();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    }
+  }, [boxId]);
+
 
   // Função para salvar item (adicionar ou editar)
   const saveItem = async () => {
     try {
       if (newItemName && newItemQuantity) {
         const newItem = { name: newItemName, quantity: newItemQuantity };
-  
+
         if (editingItem) {
           const updatedItem = {
-            originalName: editingItem.name,  
+            originalName: editingItem.name,
             name: newItemName,
             quantity: newItemQuantity
           };
-          
+
           const success = await updateItemInBox(boxId, updatedItem);
-          
+
           if (!success) {
             Alert.alert('Erro', 'Não foi possível atualizar o item.');
             return;
           }
 
           setItems(items.map(item => item.name === editingItem.name ? updatedItem : item));
-          
-          setEditingItem(null); 
+
+          setEditingItem(null);
         } else {
           const success = await addItemToBox(boxId, newItem);
-    
+
           if (!success) {
             Alert.alert("Erro", "Um item com este nome já existe neste container");
             return;
           }
-    
+
           setItems([...items, newItem]);
         }
 
@@ -86,7 +109,7 @@ export default function BoxDetailsScreen({ route }) {
       console.error('Erro ao salvar o item:', error.message);
     }
   };
-  
+
   // Função para remover um item
   const removeItem = async (item) => {
     await removeItemFromBox(boxId, item.name);
@@ -97,10 +120,10 @@ export default function BoxDetailsScreen({ route }) {
   const editItem = (item) => {
     setNewItemName(item.name);
     setNewItemQuantity(item.quantity);
-    setEditingItem(item);  
+    setEditingItem(item);
     setModalVisible(true);
   };
-  
+
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemInfo}>
@@ -131,7 +154,7 @@ export default function BoxDetailsScreen({ route }) {
       />
 
       <TouchableOpacity style={styles.addButton} onPress={() => {
-        setEditingItem(null); 
+        setEditingItem(null);
         setModalVisible(true);
       }}>
         <Text style={styles.addButtonText}>Adicionar Item</Text>
@@ -197,13 +220,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   itemInfo: {
-    flex: 1, 
-    marginRight: 10, 
+    flex: 1,
+    marginRight: 10,
   },
   itemName: {
     fontSize: 18,
     maxWidth: '80%',
-    flexWrap: 'wrap', 
+    flexWrap: 'wrap',
     fontWeight: 'bold',
   },
   itemQuantity: {
@@ -228,9 +251,9 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
     width: '85%',

@@ -15,11 +15,34 @@ export default function EnvironmentScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { removeEnvironment } = useContext(BoxContext);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareEnvironmentId, setShareEnvironmentId] = useState(null);
+  const [shareEmail, setShareEmail] = useState('');
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     fetchEnvironments();
     fetchAllBoxes();
   }, []);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel('environments_channel')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'environments'
+      }, payload => {
+        console.log('Nova mudança de ambiente:', payload);
+        fetchEnvironments();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
 
   // Caso retornar para a tela Ambiente
   useFocusEffect(
@@ -38,21 +61,54 @@ export default function EnvironmentScreen({ navigation }) {
         return;
       }
 
-      const { data: environmentData, error: environmentError } = await supabase
+      setUserId(user.id);
+
+      // Busca ambientes próprios
+      const { data: ownEnvironments, error: ownError } = await supabase
         .from('environments')
-        .select('id, name')
+        .select('id, name, user_id')
         .eq('user_id', user.id);
 
-      if (environmentError) {
-        console.error('Erro ao carregar ambientes:', environmentError.message);
-        return;
+      if (ownError) {
+        console.error('Erro ao buscar ambientes próprios:', ownError.message);
       }
 
-      setEnvironments(environmentData || []);
+      // Busca ambientes compartilhados
+      const { data: sharedEnvIdsData, error: sharedEnvIdsError } = await supabase
+        .from('environment_shares')
+        .select('environment_id')
+        .eq('shared_with_user_email', user.email)
+        .eq('status', 'accepted');
+
+      if (sharedEnvIdsError) {
+        console.error('Erro ao buscar IDs de ambientes compartilhados:', sharedEnvIdsError.message);
+      }
+
+      const sharedEnvIds = (sharedEnvIdsData || []).map(record => record.environment_id);
+
+      const { data: sharedEnvironments, error: sharedError } = await supabase
+        .from('environments')
+        .select('id, name, user_id')
+        .in('id', sharedEnvIds);
+
+      if (sharedError) {
+        console.error('Erro ao buscar ambientes compartilhados:', sharedError.message);
+      }
+
+      const allEnvironments = [...(ownEnvironments || [])];
+
+      (sharedEnvironments || []).forEach(sharedEnv => {
+        if (!allEnvironments.find(env => env.id === sharedEnv.id)) {
+          allEnvironments.push(sharedEnv);
+        }
+      });
+
+      setEnvironments(allEnvironments);
     } catch (error) {
       console.error('Erro inesperado ao carregar ambientes:', error);
     }
   };
+
 
   // Função para adicionar um novo ambiente
   const addEnvironment = async () => {
@@ -151,19 +207,65 @@ export default function EnvironmentScreen({ navigation }) {
     );
   };
 
-  const renderEnvironment = ({ item }) => (
-    <View style={styles.environmentItemContainer}>
-      <TouchableOpacity
-        style={styles.environmentItem}
-        onPress={() => selectEnvironment(item)}
-      >
-        <Text style={styles.environmentName}>{item.name}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
-        <Icon name="delete" size={24} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
+  //Compartilhar Ambiente
+  const handleShareEnvironment = async () => {
+    if (!shareEmail.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um username válido.');
+      return;
+    }
+
+    // Concatena @myapp.com automaticamente
+    const fullEmail = `${shareEmail.trim()}@myapp.com`;
+
+    try {
+      const { error } = await supabase
+        .from('environment_shares')
+        .insert([
+          {
+            environment_id: shareEnvironmentId,
+            shared_with_user_email: fullEmail,
+            status: 'accepted' // teste
+          }
+        ]);
+
+      if (error) {
+        console.error('Erro ao compartilhar ambiente:', error.message);
+        Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
+      } else {
+        Alert.alert('Sucesso', `Ambiente compartilhado com ${shareEmail.trim()} com sucesso!`);
+        setShareModalVisible(false);
+        setShareEmail('');
+      }
+    } catch (error) {
+      console.error('Erro inesperado ao compartilhar ambiente:', error.message);
+    }
+  };
+
+  const renderEnvironment = ({ item }) => {
+    const isOwner = item.user_id === userId;
+
+    return (
+      <View style={styles.environmentItemContainer}>
+        <TouchableOpacity
+          style={styles.environmentItem}
+          onPress={() => selectEnvironment(item)}
+        >
+          <Text style={styles.environmentName}>{item.name}</Text>
+        </TouchableOpacity>
+        {isOwner && (
+          <TouchableOpacity onPress={() => {
+            setShareEnvironmentId(item.id);
+            setShareModalVisible(true);
+          }}>
+            <Icon name="share" size={24} color="blue" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
+          <Icon name="delete" size={24} color="red" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -198,6 +300,25 @@ export default function EnvironmentScreen({ navigation }) {
             />
             <Button title={loading ? "Criando..." : "Criar"} onPress={addEnvironment} disabled={loading} />
             <View style={styles.cancelBtnCreateEnv}><Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" /></View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={shareModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Compartilhar Ambiente</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Digite o Username"
+              value={shareEmail}
+              onChangeText={setShareEmail}
+              placeholderTextColor="gray"
+            />
+            <Button title="Compartilhar" onPress={handleShareEnvironment} />
+            <View style={styles.cancelBtnCreateEnv}>
+              <Button title="Cancelar" onPress={() => setShareModalVisible(false)} color="red" />
+            </View>
           </View>
         </View>
       </Modal>

@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, Button, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
+import { supabase } from '../supabase';
 
 export default function HomeScreen({ route, navigation }) {
   const { environmentId } = route.params || {};
@@ -13,6 +14,30 @@ export default function HomeScreen({ route, navigation }) {
   useEffect(() => {
     if (environmentId) {
       fetchBoxes(environmentId);
+    } else {
+      setBoxes({});
+    }
+  }, [environmentId]);
+
+  useEffect(() => {
+    if (environmentId) {
+      fetchBoxes(environmentId);
+
+      const subscription = supabase
+        .channel('boxes_channel')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'caixas'
+        }, payload => {
+          console.log('Nova mudança de caixa:', payload);
+          fetchBoxes(environmentId);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } else {
       setBoxes({});
     }
