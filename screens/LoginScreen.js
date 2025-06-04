@@ -5,15 +5,19 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const errorMessages = {
     "Invalid login credentials": "Credenciais de login inválidas",
@@ -25,7 +29,8 @@ export default function LoginScreen({ navigation }) {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      const remember = await AsyncStorage.getItem('rememberMe');
+      if (session && remember === 'true') {
         navigation.navigate('Environments');
       }
     };
@@ -33,14 +38,17 @@ export default function LoginScreen({ navigation }) {
   }, []);
 
   const handleLogin = async () => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: `${username}@myapp.com`,
       password
     });
+    setIsLoading(false);
     if (error) {
       const translatedMessage = errorMessages[error.message] || error.message;
       Alert.alert('Erro', translatedMessage);
     } else {
+      await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
       navigation.navigate('Environments');
     }
   };
@@ -76,8 +84,27 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Entrar</Text>
+      <View style={styles.rememberMeContainer}>
+        <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
+          <Icon
+            name={rememberMe ? 'check-box' : 'check-box-outline-blank'}
+            size={24}
+            color="#5db55b"
+          />
+        </TouchableOpacity>
+        <Text style={styles.rememberMeText}>Manter-me logado</Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Entrar</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -155,5 +182,15 @@ const styles = StyleSheet.create({
   registerLink: {
     color: '#5db55b',
     fontWeight: 'bold',
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  rememberMeText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#333',
   },
 });

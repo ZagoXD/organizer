@@ -139,7 +139,7 @@ export default function BoxDetailsScreen({ route }) {
 
   // Colors
   const getColorFromId = (id) => {
-    const colors = ['#E6C4A5', '#D6D6FF', '#FAD6FF', '#FFE6B6', '#E8D6FF', '#F5D6FF'];
+    const colors = ['#E6C4A5', '#D6D6FF', '#FAD6FF'];
     const index = id.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
     return colors[index];
   };

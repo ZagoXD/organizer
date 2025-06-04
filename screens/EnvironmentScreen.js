@@ -45,6 +45,25 @@ export default function EnvironmentScreen({ navigation }) {
     };
   }, []);
 
+  useEffect(() => {
+    const subscription = supabase
+      .channel('environments_channel')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'environment_shares'
+      }, payload => {
+        console.log('Nova mudança de ambiente compartilhado:', payload);
+        fetchEnvironments();
+        fetchAllBoxes();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
 
   // Caso retornar para a tela Ambiente
   useFocusEffect(
@@ -244,7 +263,7 @@ export default function EnvironmentScreen({ navigation }) {
 
   // Color
   const getColorForEnvironment = (environmentId) => {
-    const colors = ['#FFB6B6', '#B6E3FF', '#b6ffed', '#FFD6A5', '#FFC4B6', '#D1B6FF'];
+    const colors = ['#FFC4B6', '#D1B6FF'];
     const index = environmentId % colors.length;
     return colors[index];
   };

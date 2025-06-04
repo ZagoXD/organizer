@@ -86,7 +86,7 @@ export default function HomeScreen({ route, navigation }) {
 
   // Cores dinamicas
   const getColorFromId = (id) => {
-    const colors = ['#F5D6A5', '#FFE5B6', '#E1D6FF', '#FFDFB6', '#E8B6FF', '#FFD6E8'];
+    const colors = ['#E1D6FF', '#FFDFB6'];
     const index = id.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
     return colors[index];
   };

@@ -5,7 +5,8 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,6 +16,7 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const errorMessages = {
     "User already registered": "Usuário já registrado",
@@ -28,6 +30,7 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
+    setIsLoading(true);
     const { error } = await supabase.auth.signUp({
       email: `${username}@myapp.com`,
       password,
@@ -37,6 +40,7 @@ export default function RegisterScreen({ navigation }) {
         }
       }
     });
+    setIsLoading(false);
 
     if (error) {
       const translatedMessage = errorMessages[error.message] || error.message;
@@ -101,8 +105,16 @@ export default function RegisterScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerButtonText}>Registrar</Text>
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={handleRegister}
+        disabled={isLoading}  // impede múltiplos cliques
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.registerButtonText}>Registrar</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
