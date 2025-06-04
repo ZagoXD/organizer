@@ -241,19 +241,30 @@ export default function EnvironmentScreen({ navigation }) {
     }
   };
 
+  // Color
+  const getColorForEnvironment = (environmentId) => {
+    const colors = ['#FFB6B6', '#B6E3FF', '#b6ffed', '#FFD6A5', '#FFC4B6', '#D1B6FF'];
+    const index = environmentId % colors.length;
+    return colors[index];
+  };
+
   const renderEnvironment = ({ item }) => {
     const isOwner = item.user_id === userId;
     const isShared = !isOwner;
+    const backgroundColor = getColorForEnvironment(item.id);
 
     return (
-      <View style={styles.environmentItemContainer}>
+      <View style={[styles.environmentItemContainer, { backgroundColor }]}>
         <TouchableOpacity
           style={styles.environmentItem}
           onPress={() => selectEnvironment(item)}
         >
-          <Text style={styles.environmentName}>
-            {item.name} {isShared && <Text style={{ fontSize: 14, color: '#888' }}>(compartilhado)</Text>}
-          </Text>
+          <View style={styles.environmentTitleRow}>
+            <Icon name="home" size={20} color="#000" style={styles.iconHome} />
+            <Text style={styles.environmentName}>
+              {item.name} {isShared && <Text style={{ fontSize: 14, color: '#555' }}>(compartilhado)</Text>}
+            </Text>
+          </View>
         </TouchableOpacity>
         {isOwner && (
           <TouchableOpacity onPress={() => {
@@ -273,11 +284,13 @@ export default function EnvironmentScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Pesquisar objeto"
           value={search}
           onChangeText={setSearch}
+          placeholderTextColor="#aaa"
         />
       </View>
       <FlatList
@@ -287,13 +300,17 @@ export default function EnvironmentScreen({ navigation }) {
         ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
       />
 
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-        <Text style={styles.addButtonText}>Criar Ambiente</Text>
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.floatingButton}
+      >
+        <Icon name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Adicionar Novo Ambiente</Text>
             <TextInput
               style={styles.input}
               placeholder="Nome do ambiente"
@@ -339,23 +356,48 @@ const styles = StyleSheet.create({
   },
   environmentItem: {
     padding: 20,
-    backgroundColor: '#eaeaea',
     borderRadius: 5,
     marginBottom: 10,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
   environmentName: {
     fontSize: 18,
   },
+  modalTitle: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
     marginBottom: 20,
+    backgroundColor: '#f9f9f9',
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#333',
   },
   addButton: {
     backgroundColor: '#5db55b',
@@ -387,17 +429,32 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
+  iconHome: {
+    marginRight: 8,
+  },
   environmentItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderRadius: 10,
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
   environmentItem: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#eaeaea',
     borderRadius: 5,
     marginRight: 10,
+  },
+  environmentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
   },
 });

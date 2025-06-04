@@ -29,7 +29,7 @@ export default function BoxDetailsScreen({ route }) {
 
     const { data: itemData, error: itemError } = await supabase
       .from('itens')
-      .select('*')
+      .select('id, name, quantity')
       .eq('box_id', boxId);
 
     if (itemError) {
@@ -87,18 +87,22 @@ export default function BoxDetailsScreen({ route }) {
             return;
           }
 
-          setItems(items.map(item => item.name === editingItem.name ? updatedItem : item));
+          setItems(items.map(item =>
+            item.name === editingItem.name
+              ? { ...item, name: updatedItem.name, quantity: updatedItem.quantity }
+              : item
+          ));
 
           setEditingItem(null);
         } else {
-          const success = await addItemToBox(boxId, newItem);
+          const createdItem = await addItemToBox(boxId, newItem);
 
-          if (!success) {
+          if (!createdItem) {
             Alert.alert("Erro", "Um item com este nome já existe neste container");
             return;
           }
 
-          setItems([...items, newItem]);
+          setItems([...items, createdItem]);
         }
 
         setNewItemName('');
@@ -124,40 +128,55 @@ export default function BoxDetailsScreen({ route }) {
     setModalVisible(true);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemQuantity}>Quantidade: {item.quantity}</Text>
+  // Colors
+  const getColorFromId = (id) => {
+    const colors = ['#E6C4A5', '#D6D6FF', '#FAD6FF', '#FFE6B6', '#E8D6FF', '#F5D6FF'];
+    const index = id.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
+  };
+
+  const renderItem = ({ item }) => {
+    const backgroundColor = getColorFromId(item.id);
+
+    return (
+      <View style={[styles.itemContainer, { backgroundColor }]}>
+        <View style={styles.itemInfo}>
+          <View style={styles.itemTitleRow}>
+            <Icon name="layers" size={20} color="#000" style={styles.iconItem} />
+            <Text style={styles.itemName}>{item.name}</Text>
+          </View>
+          <Text style={styles.itemQuantity}>Quantidade: {item.quantity}</Text>
+        </View>
+        <View style={styles.itemActions}>
+          <TouchableOpacity onPress={() => editItem(item)}>
+            <Icon name="edit" size={24} color="blue" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => removeItem(item)}>
+            <Icon name="delete" size={24} color="red" />
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.itemActions}>
-        <TouchableOpacity onPress={() => editItem(item)}>
-          <Icon name="edit" size={24} color="blue" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => removeItem(item)}>
-          <Icon name="delete" size={24} color="red" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Detalhes do compartimento</Text>
-
       <FlatList
         data={items}
         renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.id.toString()}
         style={styles.itemList}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item adicionado ainda.</Text>}
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={() => {
-        setEditingItem(null);
-        setModalVisible(true);
-      }}>
-        <Text style={styles.addButtonText}>Adicionar Item</Text>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => {
+          setEditingItem(null);
+          setModalVisible(true);
+        }}
+      >
+        <Icon name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
       <Modal
@@ -206,8 +225,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  iconItem: {
+    marginRight: 8,
+  },
   itemList: {
     marginTop: 20,
+  },
+  itemTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
   },
   itemContainer: {
     flexDirection: 'row',
@@ -279,5 +311,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
 });

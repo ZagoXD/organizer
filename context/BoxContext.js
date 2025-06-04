@@ -269,7 +269,7 @@ export const BoxProvider = ({ children }) => {
 
     if (!boxId) {
       console.error('Erro: boxId está indefinido');
-      return false
+      return false;
     }
 
     const { data: existingItem, error: existingError } = await supabase
@@ -279,7 +279,7 @@ export const BoxProvider = ({ children }) => {
       .eq('name', newItem.name)
       .single();
 
-    if (existingError && existingError.code !== 'PGRST116') { // PGRST116 indica que nenhum item foi encontrado
+    if (existingError && existingError.code !== 'PGRST116') {
       console.error('Erro ao verificar item duplicado:', existingError.message);
       return false;
     }
@@ -288,28 +288,31 @@ export const BoxProvider = ({ children }) => {
       return false;
     }
 
-    const { error: insertError } = await supabase
+    const { data: insertedItems, error: insertError } = await supabase
       .from('itens')
       .insert([{
         box_id: boxId,
         name: newItem.name,
         quantity: newItem.quantity
-      }]);
+      }])
+      .select('*');
 
     if (insertError) {
       console.error('Erro ao adicionar item:', insertError.message);
       return false;
-    } else {
-
-      setBoxes(prevBoxes => ({
-        ...prevBoxes,
-        [boxId]: {
-          ...prevBoxes[boxId],
-          items: [...prevBoxes[boxId].items, newItem]
-        }
-      }));
-      return true;
     }
+
+    const insertedItem = insertedItems[0];
+
+    setBoxes(prevBoxes => ({
+      ...prevBoxes,
+      [boxId]: {
+        ...prevBoxes[boxId],
+        items: [...prevBoxes[boxId].items, insertedItem]
+      }
+    }));
+
+    return insertedItem;
   };
 
   const updateItemInBox = async (boxId, updatedItem) => {
