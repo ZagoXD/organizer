@@ -15,11 +15,35 @@ export default function EnvironmentScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { removeEnvironment } = useContext(BoxContext);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareEnvironmentId, setShareEnvironmentId] = useState(null);
+  const [shareEmail, setShareEmail] = useState('');
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     fetchEnvironments();
     fetchAllBoxes();
   }, []);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel('environments_channel')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'environments'
+      }, payload => {
+        console.log('Nova mudança de ambiente:', payload);
+        fetchEnvironments();
+        fetchAllBoxes();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
 
   // Caso retornar para a tela Ambiente
   useFocusEffect(
@@ -38,17 +62,49 @@ export default function EnvironmentScreen({ navigation }) {
         return;
       }
 
-      const { data: environmentData, error: environmentError } = await supabase
+      setUserId(user.id);
+
+      // Ambientes próprios
+      const { data: ownEnvironments, error: ownError } = await supabase
         .from('environments')
-        .select('id, name')
+        .select('id, name, user_id')
         .eq('user_id', user.id);
 
-      if (environmentError) {
-        console.error('Erro ao carregar ambientes:', environmentError.message);
-        return;
+      if (ownError) {
+        console.error('Erro ao buscar ambientes próprios:', ownError.message);
       }
 
-      setEnvironments(environmentData || []);
+      // IDs de ambientes compartilhados
+      const { data: sharedEnvIdsData, error: sharedEnvIdsError } = await supabase
+        .from('environment_shares')
+        .select('environment_id')
+        .eq('shared_with_user_email', user.email)
+        .eq('status', 'accepted');
+
+      if (sharedEnvIdsError) {
+        console.error('Erro ao buscar IDs de ambientes compartilhados:', sharedEnvIdsError.message);
+      }
+
+      const sharedEnvIds = (sharedEnvIdsData || []).map(record => record.environment_id);
+
+      const { data: sharedEnvironments, error: sharedError } = await supabase
+        .from('environments')
+        .select('id, name, user_id')
+        .in('id', sharedEnvIds);
+
+      if (sharedError) {
+        console.error('Erro ao buscar ambientes compartilhados:', sharedError.message);
+      }
+
+      const allEnvironments = [...(ownEnvironments || [])];
+
+      (sharedEnvironments || []).forEach(sharedEnv => {
+        if (!allEnvironments.find(env => env.id === sharedEnv.id)) {
+          allEnvironments.push(sharedEnv);
+        }
+      });
+
+      setEnvironments(allEnvironments);
     } catch (error) {
       console.error('Erro inesperado ao carregar ambientes:', error);
     }
@@ -151,28 +207,90 @@ export default function EnvironmentScreen({ navigation }) {
     );
   };
 
-  const renderEnvironment = ({ item }) => (
-    <View style={styles.environmentItemContainer}>
-      <TouchableOpacity
-        style={styles.environmentItem}
-        onPress={() => selectEnvironment(item)}
-      >
-        <Text style={styles.environmentName}>{item.name}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
-        <Icon name="delete" size={24} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
+  //Compartilhar Ambiente
+  const handleShareEnvironment = async () => {
+    if (!shareEmail.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um username válido.');
+      return;
+    }
+
+    // Concatena @myapp.com automaticamente
+    const fullEmail = `${shareEmail.trim()}@myapp.com`;
+
+    try {
+      const { error } = await supabase
+        .from('environment_shares')
+        .insert([
+          {
+            environment_id: shareEnvironmentId,
+            shared_with_user_email: fullEmail,
+            status: 'accepted' // teste
+          }
+        ]);
+
+      if (error) {
+        console.error('Erro ao compartilhar ambiente:', error.message);
+        Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
+      } else {
+        Alert.alert('Sucesso', `Ambiente compartilhado com ${shareEmail.trim()} com sucesso!`);
+        setShareModalVisible(false);
+        setShareEmail('');
+      }
+    } catch (error) {
+      console.error('Erro inesperado ao compartilhar ambiente:', error.message);
+    }
+  };
+
+  // Color
+  const getColorForEnvironment = (environmentId) => {
+    const colors = ['#FFB6B6', '#B6E3FF', '#b6ffed', '#FFD6A5', '#FFC4B6', '#D1B6FF'];
+    const index = environmentId % colors.length;
+    return colors[index];
+  };
+
+  const renderEnvironment = ({ item }) => {
+    const isOwner = item.user_id === userId;
+    const isShared = !isOwner;
+    const backgroundColor = getColorForEnvironment(item.id);
+
+    return (
+      <View style={[styles.environmentItemContainer, { backgroundColor }]}>
+        <TouchableOpacity
+          style={styles.environmentItem}
+          onPress={() => selectEnvironment(item)}
+        >
+          <View style={styles.environmentTitleRow}>
+            <Icon name="home" size={20} color="#000" style={styles.iconHome} />
+            <Text style={styles.environmentName}>
+              {item.name} {isShared && <Text style={{ fontSize: 14, color: '#555' }}>(compartilhado)</Text>}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {isOwner && (
+          <TouchableOpacity onPress={() => {
+            setShareEnvironmentId(item.id);
+            setShareModalVisible(true);
+          }}>
+            <Icon name="share" size={24} color="blue" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
+          <Icon name="delete" size={24} color="red" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Pesquisar objeto"
           value={search}
           onChangeText={setSearch}
+          placeholderTextColor="#aaa"
         />
       </View>
       <FlatList
@@ -182,13 +300,17 @@ export default function EnvironmentScreen({ navigation }) {
         ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
       />
 
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-        <Text style={styles.addButtonText}>Criar Ambiente</Text>
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.floatingButton}
+      >
+        <Icon name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Adicionar Novo Ambiente</Text>
             <TextInput
               style={styles.input}
               placeholder="Nome do ambiente"
@@ -198,6 +320,25 @@ export default function EnvironmentScreen({ navigation }) {
             />
             <Button title={loading ? "Criando..." : "Criar"} onPress={addEnvironment} disabled={loading} />
             <View style={styles.cancelBtnCreateEnv}><Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" /></View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={shareModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Compartilhar Ambiente</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Digite o Username"
+              value={shareEmail}
+              onChangeText={setShareEmail}
+              placeholderTextColor="gray"
+            />
+            <Button title="Compartilhar" onPress={handleShareEnvironment} />
+            <View style={styles.cancelBtnCreateEnv}>
+              <Button title="Cancelar" onPress={() => setShareModalVisible(false)} color="red" />
+            </View>
           </View>
         </View>
       </Modal>
@@ -215,23 +356,48 @@ const styles = StyleSheet.create({
   },
   environmentItem: {
     padding: 20,
-    backgroundColor: '#eaeaea',
     borderRadius: 5,
     marginBottom: 10,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
   environmentName: {
     fontSize: 18,
   },
+  modalTitle: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
     marginBottom: 20,
+    backgroundColor: '#f9f9f9',
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#333',
   },
   addButton: {
     backgroundColor: '#5db55b',
@@ -263,17 +429,32 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
+  iconHome: {
+    marginRight: 8,
+  },
   environmentItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderRadius: 10,
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
   environmentItem: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#eaeaea',
     borderRadius: 5,
     marginRight: 10,
+  },
+  environmentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
   },
 });

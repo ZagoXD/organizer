@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, Button, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
+import { supabase } from '../supabase';
 
 export default function HomeScreen({ route, navigation }) {
   const { environmentId } = route.params || {};
@@ -13,6 +14,30 @@ export default function HomeScreen({ route, navigation }) {
   useEffect(() => {
     if (environmentId) {
       fetchBoxes(environmentId);
+    } else {
+      setBoxes({});
+    }
+  }, [environmentId]);
+
+  useEffect(() => {
+    if (environmentId) {
+      fetchBoxes(environmentId);
+
+      const subscription = supabase
+        .channel('boxes_channel')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'caixas'
+        }, payload => {
+          console.log('Nova mudança de caixa:', payload);
+          fetchBoxes(environmentId);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     } else {
       setBoxes({});
     }
@@ -58,20 +83,33 @@ export default function HomeScreen({ route, navigation }) {
     items: boxes[boxId].items,
   }));
 
-  const renderItem = ({ item }) => (
-    <View style={styles.boxContainer}>
-      <TouchableOpacity
-        style={styles.boxItem}
-        onPress={() => navigation.navigate('BoxDetails', { boxId: item.id })}
-      >
-        <Text style={styles.boxText}>{item.name}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => handleRemoveBox(item.id)}>
-        <Icon name="delete" size={24} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
+  // Cores dinamicas
+  const getColorFromId = (id) => {
+    const colors = ['#F5D6A5', '#FFE5B6', '#E1D6FF', '#FFDFB6', '#E8B6FF', '#FFD6E8'];
+    const index = id.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
+  };
 
+  const renderItem = ({ item }) => {
+    const backgroundColor = getColorFromId(item.id);
+
+    return (
+      <View style={[styles.boxContainer, { backgroundColor }]}>
+        <TouchableOpacity
+          style={styles.boxItem}
+          onPress={() => navigation.navigate('BoxDetails', { boxId: item.id })}
+        >
+          <View style={styles.boxTitleRow}>
+            <Icon name="inventory" size={20} color="#000" style={styles.iconBox} />
+            <Text style={styles.boxText}>{item.name}</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleRemoveBox(item.id)}>
+          <Icon name="delete" size={24} color="red" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const handleAddBox = async () => {
     if (newBoxName.trim()) {
@@ -86,22 +124,26 @@ export default function HomeScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Pesquisar objeto"
           value={search}
           onChangeText={setSearch}
+          placeholderTextColor="#aaa"
         />
       </View>
-
       <FlatList
         data={boxList}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
       />
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>Adicionar Compartimento</Text>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Icon name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
       <Modal
@@ -137,16 +179,46 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
     marginBottom: 20,
+    backgroundColor: '#f9f9f9',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
   cancelBtnCreateBox: {
     marginTop: 10,
   },
+  boxTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  iconBox: {
+    marginRight: 8,
   },
   addButton: {
     marginLeft: 10,
@@ -167,12 +239,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    borderRadius: 5,
+    padding: 20,
   },
   boxItem: {
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    padding: 10,
     flex: 1,
     marginRight: 10,
   },
