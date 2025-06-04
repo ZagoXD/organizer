@@ -17,7 +17,7 @@ export default function BottomBar() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 60,
+    height: 90,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#ccc',

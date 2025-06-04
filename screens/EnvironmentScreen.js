@@ -267,85 +267,110 @@ export default function EnvironmentScreen({ navigation }) {
             </Text>
           </View>
         </TouchableOpacity>
-        {isOwner && (
-          <TouchableOpacity onPress={() => {
-            setShareEnvironmentId(item.id);
-            setShareModalVisible(true);
-          }}>
-            <Icon name="share" size={24} color="blue" />
+        <View style={styles.itemActions}>
+          {isOwner && (
+            <TouchableOpacity onPress={() => {
+              setShareEnvironmentId(item.id);
+              setShareModalVisible(true);
+            }}>
+              <Icon name="share" size={24} color="blue" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
+            <Icon name="delete" size={24} color="red" />
           </TouchableOpacity>
-        )}
-        <TouchableOpacity onPress={() => handleDeleteEnvironment(item.id)}>
-          <Icon name="delete" size={24} color="red" />
-        </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.TopBarContainer}>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Pesquisar objeto"
-            value={search}
-            onChangeText={setSearch}
-            placeholderTextColor="#aaa"
-          />
-        </View>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={styles.floatingButton}
-        >
-          <Icon name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={filterEnvironmentsBySearch()}
-        renderItem={renderEnvironment}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
-      />
-
-      <BottomBar />
-
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Novo Ambiente</Text>
+    <View style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.TopBarContainer}>
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
             <TextInput
-              style={styles.input}
-              placeholder="Nome do ambiente"
-              value={newEnvironmentName}
-              onChangeText={setNewEnvironmentName}
-              placeholderTextColor="gray"
+              style={styles.searchInput}
+              placeholder="Pesquisar objeto"
+              value={search}
+              onChangeText={setSearch}
+              placeholderTextColor="#aaa"
             />
-            <Button title={loading ? "Criando..." : "Criar"} onPress={addEnvironment} disabled={loading} />
-            <View style={styles.cancelBtnCreateEnv}><Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" /></View>
           </View>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={styles.floatingButton}
+          >
+            <Icon name="add" size={28} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <FlatList
+          data={filterEnvironmentsBySearch()}
+          renderItem={renderEnvironment}
+          keyExtractor={(item) => item.id.toString()}
+          ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
+        />
 
-      <Modal visible={shareModalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Compartilhar Ambiente</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Digite o Username"
-              value={shareEmail}
-              onChangeText={setShareEmail}
-              placeholderTextColor="gray"
-            />
-            <Button title="Compartilhar" onPress={handleShareEnvironment} />
-            <View style={styles.cancelBtnCreateEnv}>
-              <Button title="Cancelar" onPress={() => setShareModalVisible(false)} color="red" />
+        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Adicionar Novo Ambiente</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome do ambiente"
+                value={newEnvironmentName}
+                onChangeText={setNewEnvironmentName}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={addEnvironment}
+                disabled={loading}
+              >
+                <Text style={styles.modalButtonText}>
+                  {loading ? "Criando..." : "Criar"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+
+        <Modal visible={shareModalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Compartilhar Ambiente</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Digite o Username"
+                value={shareEmail}
+                onChangeText={setShareEmail}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleShareEnvironment}
+              >
+                <Text style={styles.modalButtonText}>Compartilhar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShareModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+      </View>
+      <BottomBar />
     </View>
   );
 }
@@ -366,10 +391,16 @@ const styles = StyleSheet.create({
   environmentName: {
     fontSize: 18,
   },
+  itemActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 70,
+  },
   modalTitle: {
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 15,
+    color: '#333',
     textAlign: 'center',
   },
   searchContainer: {
@@ -426,20 +457,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
   },
   modalView: {
-    width: '80%',
-    backgroundColor: 'white',
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
     padding: 20,
-    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 5,
   },
   input: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 15,
+    backgroundColor: '#f9f9f9',
+  },
+  modalButton: {
+    width: '100%',
+    backgroundColor: '#5db55b',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    width: '100%',
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
   },
   iconHome: {
     marginRight: 8,
@@ -448,7 +515,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderRadius: 10,
-    padding: 10,
+    padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,

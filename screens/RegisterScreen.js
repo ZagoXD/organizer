@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { supabase } from '../supabase';  
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Alert,
+  TouchableOpacity
+} from 'react-native';
+import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function RegisterScreen({ navigation }) {
@@ -8,8 +15,9 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+
   const errorMessages = {
-    "User already registered": "usuario já registrado",
+    "User already registered": "Usuário já registrado",
     "Password should be at least 6 characters.": "A senha deve ter pelo menos 6 caracteres",
     "Passwords do not match": "As senhas não coincidem",
   };
@@ -25,11 +33,11 @@ export default function RegisterScreen({ navigation }) {
       password,
       options: {
         data: {
-          username: username 
+          username: username
         }
       }
     });
-  
+
     if (error) {
       const translatedMessage = errorMessages[error.message] || error.message;
       Alert.alert('Erro', translatedMessage);
@@ -41,45 +49,71 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Registrar</Text>
+      <Text style={styles.title}>Criar Conta</Text>
+      <Text style={styles.subtitle}>Preencha os dados abaixo</Text>
+
       <View style={styles.inputContainer}>
-        <TextInput 
+        <Icon name="person" size={24} color="#555" style={styles.inputIcon} />
+        <TextInput
           style={styles.input}
           placeholder="Nome de Usuário"
           value={username}
-          onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}  
-          placeholderTextColor="#555" 
+          onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
+          placeholderTextColor="#888"
         />
       </View>
+
       <View style={styles.inputContainer}>
-        <TextInput 
+        <Icon name="lock" size={24} color="#555" style={styles.inputIcon} />
+        <TextInput
           style={styles.input}
           placeholder="Senha"
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!passwordVisible}
-          placeholderTextColor="#555" 
+          placeholderTextColor="#888"
         />
         <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-          <Icon name={passwordVisible ? 'visibility' : 'visibility-off'} size={24} color="gray" />
+          <Icon
+            name={passwordVisible ? 'visibility' : 'visibility-off'}
+            size={24}
+            color="#888"
+          />
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputContainer}>
-        <TextInput 
+        <Icon name="lock" size={24} color="#555" style={styles.inputIcon} />
+        <TextInput
           style={styles.input}
           placeholder="Confirmar Senha"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry={!passwordVisible}
-          placeholderTextColor="#555"
+          placeholderTextColor="#888"
         />
         <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-          <Icon name={passwordVisible ? 'visibility' : 'visibility-off'} size={24} color="gray" />
+          <Icon
+            name={passwordVisible ? 'visibility' : 'visibility-off'}
+            size={24}
+            color="#888"
+          />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.confirmregisterButton}><Button title="Registrar" onPress={handleRegister} /></View>
+      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+        <Text style={styles.registerButtonText}>Registrar</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.loginLink}
+        onPress={() => navigation.navigate('Login')}
+      >
+        <Text style={styles.loginLinkText}>
+          Já tem uma conta?{' '}
+          <Text style={styles.loginLinkHighlight}>Entrar</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -88,29 +122,63 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 30,
+    backgroundColor: '#fff',
   },
-  confirmregisterButton: {
-    marginTop: 20,
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#333',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#777',
+    marginBottom: 30,
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    width: '80%',
-    height: 60,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
     paddingHorizontal: 10,
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 30,
     marginBottom: 20,
+    height: 55,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  inputIcon: {
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    height: '100%',
+    fontSize: 16,
+    color: '#333',
+  },
+  registerButton: {
+    backgroundColor: '#5db55b',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 2,
+    marginBottom: 20,
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loginLink: {
+    alignItems: 'center',
+  },
+  loginLinkText: {
+    color: '#555',
+    fontSize: 16,
+  },
+  loginLinkHighlight: {
+    color: '#5db55b',
+    fontWeight: 'bold',
   },
 });
