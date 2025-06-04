@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Modal, B
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
+import BottomBar from '../components/BottomBar';
 
 export default function HomeScreen({ route, navigation }) {
   const { environmentId } = route.params || {};
@@ -123,15 +124,23 @@ export default function HomeScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Pesquisar objeto"
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor="#aaa"
-        />
+      <View style={styles.TopBarContainer}>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Pesquisar objeto"
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#aaa"
+          />
+        </View>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.floatingButton}
+        >
+          <Icon name="add" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
       <FlatList
         data={boxList}
@@ -139,12 +148,7 @@ export default function HomeScreen({ route, navigation }) {
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
       />
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Icon name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      <BottomBar />
 
       <Modal
         animationType="slide"
@@ -180,16 +184,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
+    paddingHorizontal: 10,
     borderColor: '#ccc',
     borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 20,
     backgroundColor: '#f9f9f9',
+    flex: 1,
+    height: 40,
+    marginVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
     backgroundColor: '#5db55b',
     width: 60,
     height: 60,
@@ -197,6 +203,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 5,
+    zIndex: 1000,
+    marginLeft: 10,
+  },
+  TopBarContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    flexDirection: 'row',
+    marginBottom: 10,
   },
   cancelBtnCreateBox: {
     marginTop: 10,

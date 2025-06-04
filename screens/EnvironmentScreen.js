@@ -5,6 +5,7 @@ import { Icon } from 'react-native-elements';
 import { useContext } from 'react';
 import { BoxContext } from '../context/BoxContext';
 import { useFocusEffect } from '@react-navigation/native';
+import BottomBar from '../components/BottomBar';
 
 
 export default function EnvironmentScreen({ navigation }) {
@@ -283,15 +284,23 @@ export default function EnvironmentScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Pesquisar objeto"
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor="#aaa"
-        />
+      <View style={styles.TopBarContainer}>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Pesquisar objeto"
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#aaa"
+          />
+        </View>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.floatingButton}
+        >
+          <Icon name="add" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
       <FlatList
         data={filterEnvironmentsBySearch()}
@@ -300,12 +309,7 @@ export default function EnvironmentScreen({ navigation }) {
         ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
       />
 
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={styles.floatingButton}
-      >
-        <Icon name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      <BottomBar />
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
@@ -359,18 +363,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#5db55b',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-  },
   environmentName: {
     fontSize: 18,
   },
@@ -384,14 +376,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
+    paddingHorizontal: 10,
     borderColor: '#ccc',
     borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 20,
     backgroundColor: '#f9f9f9',
+    flex: 1,
+    height: 40,
+    marginVertical: 10,
   },
   searchIcon: {
     marginRight: 8,
+  },
+  floatingButton: {
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    zIndex: 1000,
+    marginLeft: 10,
+  },
+  TopBarContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    flexDirection: 'row',
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,

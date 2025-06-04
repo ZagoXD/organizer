@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, FlatList, Modal, TextInput, Button, TouchableOp
 import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
+import BottomBar from '../components/BottomBar';
 
 export default function BoxDetailsScreen({ route }) {
   const { boxId } = route.params;
@@ -12,6 +13,7 @@ export default function BoxDetailsScreen({ route }) {
   const [newItemName, setNewItemName] = useState('');
   const [newItemQuantity, setNewItemQuantity] = useState('');
   const [editingItem, setEditingItem] = useState(null);
+  const [search, setSearch] = useState('');
 
   // Função para buscar os itens da caixa
   const fetchItems = async () => {
@@ -65,6 +67,13 @@ export default function BoxDetailsScreen({ route }) {
       };
     }
   }, [boxId]);
+
+  const filterItemsBySearch = () => {
+    if (!search.trim()) return items;
+    return items.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+  };
 
 
   // Função para salvar item (adicionar ou editar)
@@ -161,23 +170,36 @@ export default function BoxDetailsScreen({ route }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.TopBarContainer}>
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Pesquisar objeto"
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#aaa"
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => {
+            setEditingItem(null);
+            setModalVisible(true);
+          }}
+        >
+          <Icon name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
       <FlatList
-        data={items}
+        data={filterItemsBySearch()}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         style={styles.itemList}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item adicionado ainda.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item encontrado.</Text>}
       />
 
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => {
-          setEditingItem(null);
-          setModalVisible(true);
-        }}
-      >
-        <Icon name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      <BottomBar />
 
       <Modal
         animationType="slide"
@@ -216,6 +238,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+  },
+  TopBarContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    backgroundColor: '#f9f9f9',
+    flex: 1,
+    height: 40,
+    marginVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  floatingButton: {
+    backgroundColor: '#5db55b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    zIndex: 1000,
+    marginLeft: 10,
   },
   cancelBtnAddItem: {
     marginTop: 20,
@@ -311,17 +372,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#5db55b',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
   },
 });
