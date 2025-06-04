@@ -123,54 +123,66 @@ export default function HomeScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.TopBarContainer}>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Pesquisar objeto"
-            value={search}
-            onChangeText={setSearch}
-            placeholderTextColor="#aaa"
-          />
-        </View>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={styles.floatingButton}
-        >
-          <Icon name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={boxList}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
-      />
-      <BottomBar />
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Novo Compartimento</Text>
+    <View style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.TopBarContainer}>
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
             <TextInput
-              style={styles.input}
-              placeholder="Nome do compartimento"
-              value={newBoxName}
-              onChangeText={setNewBoxName}
-              placeholderTextColor="gray"
+              style={styles.searchInput}
+              placeholder="Pesquisar objeto"
+              value={search}
+              onChangeText={setSearch}
+              placeholderTextColor="#aaa"
             />
-            <Button title="Adicionar Compartimento" onPress={handleAddBox} />
-            <View style={styles.cancelBtnCreateBox}><Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} /></View>
           </View>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={styles.floatingButton}
+          >
+            <Icon name="add" size={28} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <FlatList
+          data={boxList}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
+        />
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Adicionar Novo Compartimento</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome do compartimento"
+                value={newBoxName}
+                onChangeText={setNewBoxName}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleAddBox}
+              >
+                <Text style={styles.modalButtonText}>Adicionar Compartimento</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
+      <BottomBar />
     </View>
   );
 }
@@ -302,4 +314,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
   },
+  modalButton: {
+    width: '100%',
+    backgroundColor: '#5db55b',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    width: '100%',
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
+  },
+
 });

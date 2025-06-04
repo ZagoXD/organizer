@@ -169,67 +169,84 @@ export default function BoxDetailsScreen({ route }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.TopBarContainer}>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Pesquisar objeto"
-            value={search}
-            onChangeText={setSearch}
-            placeholderTextColor="#aaa"
-          />
-        </View>
-        <TouchableOpacity
-          style={styles.floatingButton}
-          onPress={() => {
-            setEditingItem(null);
-            setModalVisible(true);
-          }}
-        >
-          <Icon name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={filterItemsBySearch()}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.itemList}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item encontrado.</Text>}
-      />
-
-      <BottomBar />
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{editingItem ? 'Editar Item' : 'Adicionar Novo Item'}</Text>
+    <View style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.TopBarContainer}>
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
             <TextInput
-              style={styles.input}
-              placeholder="Nome do item"
-              value={newItemName}
-              onChangeText={setNewItemName}
-              placeholderTextColor="gray"
+              style={styles.searchInput}
+              placeholder="Pesquisar objeto"
+              value={search}
+              onChangeText={setSearch}
+              placeholderTextColor="#aaa"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Quantidade"
-              value={newItemQuantity}
-              keyboardType="numeric"
-              onChangeText={setNewItemQuantity}
-              placeholderTextColor="gray"
-            />
-            <Button title={editingItem ? "Salvar Alterações" : "Adicionar"} onPress={saveItem} />
-            <View style={styles.cancelBtnAddItem}><Button title="Cancelar" color="red" onPress={() => setModalVisible(false)} /></View>
           </View>
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={() => {
+              setEditingItem(null);
+              setNewItemName('');
+              setNewItemQuantity('');
+              setModalVisible(true);
+            }}
+          >
+            <Icon name="add" size={28} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <FlatList
+          data={filterItemsBySearch()}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          style={styles.itemList}
+          ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item encontrado.</Text>}
+        />
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>
+                {editingItem ? 'Editar Item' : 'Adicionar Novo Item'}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome do item"
+                value={newItemName}
+                onChangeText={setNewItemName}
+                placeholderTextColor="#888"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Quantidade"
+                value={newItemQuantity}
+                keyboardType="numeric"
+                onChangeText={setNewItemQuantity}
+                placeholderTextColor="#888"
+              />
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={saveItem}
+              >
+                <Text style={styles.modalButtonText}>
+                  {editingItem ? "Salvar Alterações" : "Adicionar"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
+      <BottomBar />
     </View>
   );
 }
@@ -307,8 +324,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
     marginBottom: 10,
   },
@@ -373,4 +388,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 15,
   },
+  modalButton: {
+    width: '100%',
+    backgroundColor: '#5db55b',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    width: '100%',
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
+  },
+
 });
