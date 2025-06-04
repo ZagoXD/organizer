@@ -35,6 +35,7 @@ export default function EnvironmentScreen({ navigation }) {
       }, payload => {
         console.log('Nova mudança de ambiente:', payload);
         fetchEnvironments();
+        fetchAllBoxes();
       })
       .subscribe();
 
@@ -63,7 +64,7 @@ export default function EnvironmentScreen({ navigation }) {
 
       setUserId(user.id);
 
-      // Busca ambientes próprios
+      // Ambientes próprios
       const { data: ownEnvironments, error: ownError } = await supabase
         .from('environments')
         .select('id, name, user_id')
@@ -73,7 +74,7 @@ export default function EnvironmentScreen({ navigation }) {
         console.error('Erro ao buscar ambientes próprios:', ownError.message);
       }
 
-      // Busca ambientes compartilhados
+      // IDs de ambientes compartilhados
       const { data: sharedEnvIdsData, error: sharedEnvIdsError } = await supabase
         .from('environment_shares')
         .select('environment_id')
@@ -108,7 +109,6 @@ export default function EnvironmentScreen({ navigation }) {
       console.error('Erro inesperado ao carregar ambientes:', error);
     }
   };
-
 
   // Função para adicionar um novo ambiente
   const addEnvironment = async () => {
@@ -243,6 +243,7 @@ export default function EnvironmentScreen({ navigation }) {
 
   const renderEnvironment = ({ item }) => {
     const isOwner = item.user_id === userId;
+    const isShared = !isOwner;
 
     return (
       <View style={styles.environmentItemContainer}>
@@ -250,7 +251,9 @@ export default function EnvironmentScreen({ navigation }) {
           style={styles.environmentItem}
           onPress={() => selectEnvironment(item)}
         >
-          <Text style={styles.environmentName}>{item.name}</Text>
+          <Text style={styles.environmentName}>
+            {item.name} {isShared && <Text style={{ fontSize: 14, color: '#888' }}>(compartilhado)</Text>}
+          </Text>
         </TouchableOpacity>
         {isOwner && (
           <TouchableOpacity onPress={() => {
