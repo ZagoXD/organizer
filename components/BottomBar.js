@@ -50,19 +50,24 @@ export default function BottomBar() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 95,
+    height: 90,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     alignItems: 'center',
-    justifyContent: 'center',
+    
     zIndex: 1,
     backgroundColor: '#e8e8e8',
   },
   buttonRow: {
     flexDirection: 'row',
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
     justifyContent: 'space-around',
-    width: '80%',
+    backgroundColor: 'white',
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
   },
   button: {
     alignItems: 'center',

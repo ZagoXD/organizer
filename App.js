@@ -78,8 +78,8 @@ export default function App() {
                       left: 0,
                       right: 0,
                       backgroundColor: 'white',
-                      borderTopLeftRadius: 80,
-                      borderTopRightRadius: 80,
+                      borderBottomLeftRadius: 60,
+                      borderBottomRightRadius: 60,
                     }}
                   />
                 </>
