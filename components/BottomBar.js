@@ -39,6 +39,13 @@ export default function BottomBar() {
 
         <TouchableOpacity
           style={styles.button}
+          onPress={() => navigation.navigate('UserProfile')}
+        >
+          <Icon name="account-circle" size={30} color="#333" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleLogout}
         >
           <Icon name="logout" size={28} color="#333" />
@@ -55,7 +62,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     alignItems: 'center',
-    
     zIndex: 1,
     backgroundColor: '#e8e8e8',
   },

@@ -6,7 +6,8 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -18,6 +19,9 @@ export default function LoginScreen({ navigation }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [resetEmail, setResetEmail] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
 
   const errorMessages = {
     "Invalid login credentials": "Credenciais de login inválidas",
@@ -50,6 +54,27 @@ export default function LoginScreen({ navigation }) {
     } else {
       await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
       navigation.navigate('Environments');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      Alert.alert('Erro', 'Por favor, insira um e-mail.');
+      return;
+    }
+
+    setIsSendingResetEmail(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: 'https://reset-password-organizer.vercel.app/'
+    });
+    setIsSendingResetEmail(false);
+
+    if (error) {
+      Alert.alert('Erro', 'Não foi possível enviar o e-mail de redefinição de senha.');
+      console.error(error.message);
+    } else {
+      Alert.alert('Sucesso', 'E-mail de redefinição de senha enviado!');
+      setShowResetModal(false);
     }
   };
 
@@ -118,6 +143,52 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.registerLink}>Registre-se</Text>
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.resetButton}
+        onPress={() => setShowResetModal(true)}
+      >
+        <Text style={styles.resetButtonText}>Esqueci minha senha</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={showResetModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowResetModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Recuperar Senha</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Digite seu e-mail"
+              value={resetEmail}
+              onChangeText={setResetEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor="#888"
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleResetPassword}
+              disabled={isSendingResetEmail}
+            >
+              {isSendingResetEmail ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.modalButtonText}>Enviar E-mail</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowResetModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -194,5 +265,64 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#333',
+  },
+  resetButton: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  resetButtonText: {
+    color: '#5db55b',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginTop: 10,
+    color: '#333',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
+  modalButton: {
+    backgroundColor: '#5db55b',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 15,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    color: '#5db55b',
+    fontSize: 16,
   },
 });

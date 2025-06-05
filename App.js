@@ -13,6 +13,8 @@ import { UserProvider } from './context/UserContext';
 import BoxDetailsScreen from './screens/BoxDetailsScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import EnvironmentScreen from './screens/EnvironmentScreen';
+import UserProfileScreen from './screens/UserProfileScreen';
+import { navigationRef } from './navigation';
 
 const Stack = createStackNavigator();
 
@@ -21,7 +23,7 @@ export default function App() {
     <SafeAreaProvider>
       <UserProvider>
         <BoxProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <Stack.Navigator initialRouteName="Login" >
               <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
@@ -87,6 +89,30 @@ export default function App() {
                   </>
                 ),
               }} />
+              <Stack.Screen
+                name="UserProfile"
+                component={UserProfileScreen}
+                options={{
+                  title: 'Perfil do Usuário',
+                  headerBackground: () => (
+                    <>
+                      <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          borderTopLeftRadius: 80,
+                          borderTopRightRadius: 80,
+                        }}
+                      />
+                    </>
+                  ),
+                }}
+              />
             </Stack.Navigator>
           </NavigationContainer>
         </BoxProvider>
