@@ -12,7 +12,9 @@ import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function RegisterScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -31,24 +33,42 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setIsLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: `${username}@myapp.com`,
+    const { data, error } = await supabase.auth.signUp({
+      email,
       password,
       options: {
         data: {
-          username: username
+          full_name: fullName,
+          phone
         }
       }
     });
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       const translatedMessage = errorMessages[error.message] || error.message;
       Alert.alert('Erro', translatedMessage);
-    } else {
-      Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
-      navigation.navigate('Login');
+      return;
     }
+
+    const userId = data?.user?.id;
+    if (userId) {
+      // Inserir também na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{ id: userId, full_name: fullName, phone }]);
+
+      if (profileError) {
+        console.error('Erro ao criar perfil:', profileError.message);
+        Alert.alert('Erro', 'Houve um problema ao criar o perfil. Tente novamente.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    setIsLoading(false);
+    Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
+    navigation.navigate('Login');
   };
 
   return (
@@ -60,9 +80,34 @@ export default function RegisterScreen({ navigation }) {
         <Icon name="person" size={24} color="#555" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Nome de Usuário"
-          value={username}
-          onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
+          placeholder="Nome Completo"
+          value={fullName}
+          onChangeText={setFullName}
+          placeholderTextColor="#888"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Icon name="phone" size={24} color="#555" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Telefone"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          placeholderTextColor="#888"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Icon name="email" size={24} color="#555" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="E-mail"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
           placeholderTextColor="#888"
         />
       </View>
@@ -108,7 +153,7 @@ export default function RegisterScreen({ navigation }) {
       <TouchableOpacity
         style={styles.registerButton}
         onPress={handleRegister}
-        disabled={isLoading}  // impede múltiplos cliques
+        disabled={isLoading}
       >
         {isLoading ? (
           <ActivityIndicator size="small" color="#fff" />

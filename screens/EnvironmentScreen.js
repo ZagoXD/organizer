@@ -6,6 +6,7 @@ import { useContext } from 'react';
 import { BoxContext } from '../context/BoxContext';
 import { useFocusEffect } from '@react-navigation/native';
 import BottomBar from '../components/BottomBar';
+import GreetingHeader from '../components/GreetingHeader';
 
 
 export default function EnvironmentScreen({ navigation }) {
@@ -230,12 +231,11 @@ export default function EnvironmentScreen({ navigation }) {
   //Compartilhar Ambiente
   const handleShareEnvironment = async () => {
     if (!shareEmail.trim()) {
-      Alert.alert('Erro', 'Por favor, insira um username válido.');
+      Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
       return;
     }
 
-    // Concatena @myapp.com automaticamente
-    const fullEmail = `${shareEmail.trim()}@myapp.com`;
+    const fullEmail = shareEmail.trim();
 
     try {
       const { error } = await supabase
@@ -244,7 +244,7 @@ export default function EnvironmentScreen({ navigation }) {
           {
             environment_id: shareEnvironmentId,
             shared_with_user_email: fullEmail,
-            status: 'accepted' // teste
+            status: 'accepted'
           }
         ]);
 
@@ -252,12 +252,13 @@ export default function EnvironmentScreen({ navigation }) {
         console.error('Erro ao compartilhar ambiente:', error.message);
         Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
       } else {
-        Alert.alert('Sucesso', `Ambiente compartilhado com ${shareEmail.trim()} com sucesso!`);
+        Alert.alert('Sucesso', `Ambiente compartilhado com ${fullEmail} com sucesso!`);
         setShareModalVisible(false);
         setShareEmail('');
       }
     } catch (error) {
       console.error('Erro inesperado ao compartilhar ambiente:', error.message);
+      Alert.alert('Erro', 'Erro inesperado ao compartilhar ambiente.');
     }
   };
 
@@ -306,6 +307,7 @@ export default function EnvironmentScreen({ navigation }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.container}>
+        <GreetingHeader />
         <View style={styles.TopBarContainer}>
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />

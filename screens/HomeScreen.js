@@ -4,6 +4,7 @@ import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 import BottomBar from '../components/BottomBar';
+import GreetingHeader from '../components/GreetingHeader';
 
 export default function HomeScreen({ route, navigation }) {
   const { environmentId } = route.params || {};
@@ -125,6 +126,7 @@ export default function HomeScreen({ route, navigation }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.container}>
+        <GreetingHeader />
         <View style={styles.TopBarContainer}>
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />

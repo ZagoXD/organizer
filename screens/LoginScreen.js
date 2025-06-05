@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email: `${username}@myapp.com`,
+      email,
       password
     });
     setIsLoading(false);
@@ -59,12 +59,14 @@ export default function LoginScreen({ navigation }) {
       <Text style={styles.subtitle}>Acesse sua conta</Text>
 
       <View style={styles.inputContainer}>
-        <Icon name="person" size={24} color="#555" style={styles.inputIcon} />
+        <Icon name="email" size={24} color="#555" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Nome de Usuário"
-          value={username}
-          onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
+          placeholder="E-mail"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
           placeholderTextColor="#888"
         />
       </View>
