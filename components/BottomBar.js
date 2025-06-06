@@ -39,6 +39,13 @@ export default function BottomBar() {
 
         <TouchableOpacity
           style={styles.button}
+          onPress={() => navigation.navigate('Notifications')}
+        >
+          <Icon name="notifications" size={28} color="#333" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => navigation.navigate('UserProfile')}
         >
           <Icon name="account-circle" size={30} color="#333" />

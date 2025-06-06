@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import EnvironmentScreen from './screens/EnvironmentScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import { navigationRef } from './navigation';
+import NotificationsScreen from './screens/NotificationsScreen';
 
 const Stack = createStackNavigator();
 
@@ -51,6 +52,30 @@ export default function App() {
                 component={HomeScreen}
                 options={{
                   title: 'Compartimentos',
+                  headerBackground: () => (
+                    <>
+                      <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          borderTopLeftRadius: 80,
+                          borderTopRightRadius: 80,
+                        }}
+                      />
+                    </>
+                  ),
+                }}
+              />
+              <Stack.Screen
+                name="Notifications"
+                component={NotificationsScreen}
+                options={{
+                  title: 'Notificações',
                   headerBackground: () => (
                     <>
                       <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
