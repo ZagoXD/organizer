@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     backgroundColor: '#5db55b',
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',

@@ -12,7 +12,9 @@ import GreetingHeader from '../components/GreetingHeader';
 export default function EnvironmentScreen({ navigation }) {
   const [environments, setEnvironments] = useState([]);
   const { boxes, fetchAllBoxes } = useContext(BoxContext);
+  const [searchType, setSearchType] = useState('Objeto');
   const [search, setSearch] = useState('');
+  const [searchBox, setSearchBox] = useState('');
   const [newEnvironmentName, setNewEnvironmentName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -179,7 +181,7 @@ export default function EnvironmentScreen({ navigation }) {
 
   // Filtrar ambiente
   const filterEnvironmentsBySearch = () => {
-    if (!search.trim()) {
+    if (!search.trim() && !searchBox.trim()) {
       return environments;
     }
 
@@ -188,12 +190,22 @@ export default function EnvironmentScreen({ navigation }) {
         box && box.environment_id === env.id
       );
 
-      return boxesInEnv.some(box =>
-        Array.isArray(box.items) &&
-        box.items.some(item =>
-          item.name.toLowerCase().includes(search.toLowerCase())
-        )
-      );
+      if (searchType === 'Objeto' && search.trim()) {
+        return boxesInEnv.some(box =>
+          Array.isArray(box.items) &&
+          box.items.some(item =>
+            item.name.toLowerCase().includes(search.toLowerCase())
+          )
+        );
+      }
+
+      if (searchType === 'Compartimento' && searchBox.trim()) {
+        return boxesInEnv.some(box =>
+          box.name.toLowerCase().includes(searchBox.toLowerCase())
+        );
+      }
+
+      return true;
     });
   };
 
@@ -309,22 +321,62 @@ export default function EnvironmentScreen({ navigation }) {
       <View style={styles.container}>
         <GreetingHeader />
         <View style={styles.TopBarContainer}>
+          <View style={styles.topBarRow}>
+            <View style={styles.searchTypeToggle}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  searchType === 'Objeto' && styles.toggleButtonActive
+                ]}
+                onPress={() => setSearchType('Objeto')}
+              >
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    searchType === 'Objeto' && styles.toggleButtonTextActive
+                  ]}
+                >
+                  Objeto
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  searchType === 'Compartimento' && styles.toggleButtonActive
+                ]}
+                onPress={() => setSearchType('Compartimento')}
+              >
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    searchType === 'Compartimento' && styles.toggleButtonTextActive
+                  ]}
+                >
+                  Compartimento
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+              style={styles.floatingButton}
+            >
+              <Icon name="add" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Pesquisar objeto"
-              value={search}
-              onChangeText={setSearch}
+              placeholder={`Pesquisar ${searchType.toLowerCase()}`}
+              value={searchType === 'Objeto' ? search : searchBox}
+              onChangeText={text => {
+                if (searchType === 'Objeto') setSearch(text);
+                else setSearchBox(text);
+              }}
               placeholderTextColor="#aaa"
             />
           </View>
-          <TouchableOpacity
-            onPress={() => setModalVisible(true)}
-            style={styles.floatingButton}
-          >
-            <Icon name="add" size={28} color="#fff" />
-          </TouchableOpacity>
         </View>
         <FlatList
           data={filterEnvironmentsBySearch()}
@@ -369,7 +421,7 @@ export default function EnvironmentScreen({ navigation }) {
               <Text style={styles.modalTitle}>Compartilhar Ambiente</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Digite o Username"
+                placeholder="Digite o E-mail"
                 value={shareEmail}
                 onChangeText={setShareEmail}
                 placeholderTextColor="#888"
@@ -432,7 +484,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     backgroundColor: '#f9f9f9',
-    flex: 1,
     height: 40,
     marginVertical: 10,
   },
@@ -441,8 +492,8 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     backgroundColor: '#5db55b',
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,10 +502,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   TopBarContainer: {
-    display: 'flex',
-    alignItems: 'center',
     width: '100%',
-    flexDirection: 'row',
     marginBottom: 10,
   },
   searchInput: {
@@ -556,5 +604,44 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     marginRight: 8,
+  },
+  searchWrapperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  searchTypeToggle: {
+    flexDirection: 'row',
+    marginRight: 10,
+  },
+  toggleButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    marginRight: 5,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#5db55b',
+    borderColor: '#5db55b',
+  },
+  toggleButtonText: {
+    color: '#333',
+    fontSize: 14,
+  },
+  toggleButtonTextActive: {
+    color: '#fff',
+  },
+  TopBarContainer: {
+    width: '100%',
+    marginBottom: 10,
+  },
+  topBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
 });
