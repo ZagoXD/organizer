@@ -15,43 +15,22 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import EnvironmentScreen from './screens/EnvironmentScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import { navigationRef } from './navigation';
+import { InviteProvider } from './context/InviteContext';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <UserProvider>
-        <BoxProvider>
-          <NavigationContainer ref={navigationRef}>
-            <Stack.Navigator initialRouteName="Login" >
-              <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="Environments" component={EnvironmentScreen} options={{
-                title: 'Ambientes', headerLeft: () => null, headerBackground: () => (
-                  <>
-                    <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'white',
-                        borderTopLeftRadius: 80,
-                        borderTopRightRadius: 80,
-                      }}
-                    />
-                  </>
-                ),
-              }} />
-              <Stack.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{
-                  title: 'Compartimentos',
-                  headerBackground: () => (
+      <InviteProvider>
+        <UserProvider>
+          <BoxProvider>
+            <NavigationContainer ref={navigationRef}>
+              <Stack.Navigator initialRouteName="Login" >
+                <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Environments" component={EnvironmentScreen} options={{
+                  title: 'Ambientes', headerLeft: () => null, headerBackground: () => (
                     <>
                       <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
                       <View
@@ -68,33 +47,33 @@ export default function App() {
                       />
                     </>
                   ),
-                }}
-              />
-              <Stack.Screen name="BoxDetails" component={BoxDetailsScreen} options={{
-                title: 'Detalhes do Compartimento', headerBackground: () => (
-                  <>
-                    <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'white',
-                        borderBottomLeftRadius: 60,
-                        borderBottomRightRadius: 60,
-                      }}
-                    />
-                  </>
-                ),
-              }} />
-              <Stack.Screen
-                name="UserProfile"
-                component={UserProfileScreen}
-                options={{
-                  title: 'Perfil do Usuário',
-                  headerBackground: () => (
+                }} />
+                <Stack.Screen
+                  name="Home"
+                  component={HomeScreen}
+                  options={{
+                    title: 'Compartimentos',
+                    headerBackground: () => (
+                      <>
+                        <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            backgroundColor: 'white',
+                            borderTopLeftRadius: 80,
+                            borderTopRightRadius: 80,
+                          }}
+                        />
+                      </>
+                    ),
+                  }}
+                />
+                <Stack.Screen name="BoxDetails" component={BoxDetailsScreen} options={{
+                  title: 'Detalhes do Compartimento', headerBackground: () => (
                     <>
                       <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
                       <View
@@ -105,18 +84,42 @@ export default function App() {
                           left: 0,
                           right: 0,
                           backgroundColor: 'white',
-                          borderTopLeftRadius: 80,
-                          borderTopRightRadius: 80,
+                          borderBottomLeftRadius: 60,
+                          borderBottomRightRadius: 60,
                         }}
                       />
                     </>
                   ),
-                }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </BoxProvider>
-      </UserProvider>
+                }} />
+                <Stack.Screen
+                  name="UserProfile"
+                  component={UserProfileScreen}
+                  options={{
+                    title: 'Perfil do Usuário',
+                    headerBackground: () => (
+                      <>
+                        <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            backgroundColor: 'white',
+                            borderTopLeftRadius: 80,
+                            borderTopRightRadius: 80,
+                          }}
+                        />
+                      </>
+                    ),
+                  }}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </BoxProvider>
+        </UserProvider>
+      </InviteProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { InviteContext } from '../context/InviteContext';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -22,6 +23,8 @@ export default function LoginScreen({ navigation }) {
   const [resetEmail, setResetEmail] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
+  const { checkPendingInvites } = useContext(InviteContext);
+
 
   const errorMessages = {
     "Invalid login credentials": "Credenciais de login inválidas",
@@ -53,6 +56,7 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Erro', translatedMessage);
     } else {
       await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+      checkPendingInvites();
       navigation.navigate('Environments');
     }
   };

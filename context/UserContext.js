@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Alert } from 'react-native';
-import { navigate } from '../navigation'; // Importa a função navigate
+import { navigate } from '../navigation'; 
 
 export const UserContext = createContext();
 
@@ -28,17 +28,15 @@ export function UserProvider({ children }) {
 
     fetchUser();
 
-    // 🚨 Adiciona o listener de sessão
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         Alert.alert('Sessão expirada', 'Faça login novamente.');
-        navigate('Login'); // Usa a função global navigate
+        navigate('Login');
       } else {
-        fetchUser(); // Recarrega o usuário para manter o estado atualizado
+        fetchUser();
       }
     });
 
-    // Remove o listener ao desmontar
     return () => {
       authListener.subscription.unsubscribe();
     };

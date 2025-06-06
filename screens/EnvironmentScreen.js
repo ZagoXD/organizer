@@ -256,7 +256,7 @@ export default function EnvironmentScreen({ navigation }) {
           {
             environment_id: shareEnvironmentId,
             shared_with_user_email: fullEmail,
-            status: 'accepted'
+            status: 'pending'
           }
         ]);
 
@@ -264,7 +264,7 @@ export default function EnvironmentScreen({ navigation }) {
         console.error('Erro ao compartilhar ambiente:', error.message);
         Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
       } else {
-        Alert.alert('Sucesso', `Ambiente compartilhado com ${fullEmail} com sucesso!`);
+        Alert.alert('Sucesso', `Convite enviado para ${fullEmail}!`);
         setShareModalVisible(false);
         setShareEmail('');
       }
