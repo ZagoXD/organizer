@@ -29,6 +29,7 @@ export default function LoginScreen({ navigation }) {
   const errorMessages = {
     "Invalid login credentials": "Credenciais de login inválidas",
     "Email already registered": "E-mail já registrado",
+    "missing email or phone": "Preencha o email para prosseguir",
     "Password should be at least 6 characters": "A senha deve ter pelo menos 6 caracteres",
     "User not confirmed": "Usuário não confirmado",
   };

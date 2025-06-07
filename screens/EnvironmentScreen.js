@@ -250,7 +250,22 @@ export default function EnvironmentScreen({ navigation }) {
     const fullEmail = shareEmail.trim();
 
     try {
-      const { error } = await supabase
+      // Busca o nome do ambiente antes de compartilhar
+      const { data: envData, error: envError } = await supabase
+        .from('environments')
+        .select('name')
+        .eq('id', shareEnvironmentId)
+        .single();
+
+      if (envError || !envData) {
+        console.error('Erro ao buscar o nome do ambiente:', envError?.message);
+        Alert.alert('Erro', 'Não foi possível encontrar o nome do ambiente.');
+        return;
+      }
+
+      console.log(`Compartilhando ambiente: ${envData.name}`);
+
+      const { data, error } = await supabase
         .from('environment_shares')
         .insert([
           {
@@ -258,12 +273,14 @@ export default function EnvironmentScreen({ navigation }) {
             shared_with_user_email: fullEmail,
             status: 'pending'
           }
-        ]);
+        ])
+        .select(`id, environment_id, status, shared_with_user_email, environments (name)`);
 
       if (error) {
         console.error('Erro ao compartilhar ambiente:', error.message);
         Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
       } else {
+        console.log(`Compartilhamento criado para ${fullEmail} com ambiente: ${envData.name}`);
         Alert.alert('Sucesso', `Convite enviado para ${fullEmail}!`);
         setShareModalVisible(false);
         setShareEmail('');
@@ -422,6 +439,7 @@ export default function EnvironmentScreen({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="Digite o E-mail"
+                keyboardType="email-address"
                 value={shareEmail}
                 onChangeText={setShareEmail}
                 placeholderTextColor="#888"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,20 +10,28 @@ import {
 } from 'react-native';
 import { supabase } from '../supabase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import PhoneInput from 'react-native-phone-input';
 
 export default function RegisterScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Referência do PhoneInput
+  const phoneRef = useRef(null);
+  const [phone, setPhone] = useState('');
+
   const errorMessages = {
     "User already registered": "Usuário já registrado",
     "Password should be at least 6 characters.": "A senha deve ter pelo menos 6 caracteres",
     "Passwords do not match": "As senhas não coincidem",
+  };
+
+  const handlePhoneChange = (number) => {
+    setPhone(number);
   };
 
   const handleRegister = async () => {
@@ -33,42 +41,48 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone
+          }
         }
-      }
-    });
+      });
 
-    if (error) {
-      setIsLoading(false);
-      const translatedMessage = errorMessages[error.message] || error.message;
-      Alert.alert('Erro', translatedMessage);
-      return;
-    }
-
-    const userId = data?.user?.id;
-    if (userId) {
-      // Inserir também na tabela profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{ id: userId, full_name: fullName, phone }]);
-
-      if (profileError) {
-        console.error('Erro ao criar perfil:', profileError.message);
-        Alert.alert('Erro', 'Houve um problema ao criar o perfil. Tente novamente.');
+      if (error) {
         setIsLoading(false);
+        const translatedMessage = errorMessages[error.message] || error.message;
+        Alert.alert('Erro', translatedMessage);
         return;
       }
-    }
 
-    setIsLoading(false);
-    Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
-    navigation.navigate('Login');
+      const userId = data?.user?.id;
+      if (userId) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ id: userId, full_name: fullName, phone }]);
+
+        if (profileError) {
+          console.error('Erro ao criar perfil:', profileError.message);
+          Alert.alert('Erro', 'Houve um problema ao criar o perfil. Tente novamente.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      setIsLoading(false);
+      Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
+      navigation.navigate('Login');
+    } catch (err) {
+      setIsLoading(false);
+      console.error('Erro inesperado:', err.message);
+      Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+    }
   };
 
   return (
@@ -89,13 +103,16 @@ export default function RegisterScreen({ navigation }) {
 
       <View style={styles.inputContainer}>
         <Icon name="phone" size={24} color="#555" style={styles.inputIcon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Telefone"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          placeholderTextColor="#888"
+        <PhoneInput
+          ref={phoneRef}
+          initialCountry="br" // Você pode mudar para "us" ou outro país padrão
+          onChangePhoneNumber={handlePhoneChange}
+          textProps={{
+            placeholder: 'Telefone',
+            placeholderTextColor: '#888'
+          }}
+          style={styles.phoneInput}
+          textStyle={{ color: '#000' }}
         />
       </View>
 

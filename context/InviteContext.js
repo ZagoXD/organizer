@@ -1,27 +1,23 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { Alert } from 'react-native';
 import { supabase } from '../supabase';
 
 export const InviteContext = createContext();
 
 export const InviteProvider = ({ children }) => {
   const [pendingInvites, setPendingInvites] = useState([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [selectedInvite, setSelectedInvite] = useState(null);
 
   const checkPendingInvites = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('environment_shares')
-      .select(`
-        id,
-        environment_id,
-        status,
-        shared_with_user_email,
-        environments (name)
-      `)
-      .eq('shared_with_user_email', user.email)
-      .eq('status', 'pending');
+   const { data, error } = await supabase
+  .from('environment_shares_with_names')
+  .select('*')
+  .eq('shared_with_user_email', user.email)
+  .eq('status', 'pending');
+
 
     if (error) {
       console.error('Erro ao buscar convites:', error.message);
@@ -29,29 +25,18 @@ export const InviteProvider = ({ children }) => {
     }
 
     if (data && data.length > 0) {
-      const newInvites = data.filter(invite => 
+      const newInvites = data.filter(invite =>
         !pendingInvites.some(p => p.id === invite.id)
       );
       setPendingInvites(data);
 
-      newInvites.forEach(invite => {
-        Alert.alert(
-          'Convite de Compartilhamento',
-          `Você foi convidado para o ambiente: ${invite.environments?.name || 'Sem nome'}. Aceitar convite?`,
-          [
-            {
-              text: 'Recusar',
-              onPress: () => declineInvite(invite.id),
-              style: 'cancel'
-            },
-            {
-              text: 'Aceitar',
-              onPress: () => acceptInvite(invite.id)
-            }
-          ],
-          { cancelable: true }
-        );
-      });
+      if (newInvites.length > 0) {
+        const firstInvite = newInvites[0];
+        console.log(`Solicitação de compartilhamento do ambiente: ${firstInvite.environment_name || 'Sem nome'}`);
+
+        setSelectedInvite(firstInvite);
+        setShowInviteModal(true);
+      }
     }
   };
 
@@ -69,6 +54,19 @@ export const InviteProvider = ({ children }) => {
         if (!user) return;
 
         if (payload.new.shared_with_user_email === user.email && payload.new.status === 'pending') {
+          // Busca o nome do ambiente explicitamente
+          const { data: envData, error: envError } = await supabase
+            .from('environments')
+            .select('name')
+            .eq('id', payload.new.environment_id)
+            .single();
+
+          if (envError) {
+            console.error('Erro ao buscar nome do ambiente:', envError.message);
+          } else {
+            console.log(`🚨 Novo convite inserido via Realtime para o ambiente: ${envData.name}`);
+          }
+
           checkPendingInvites();
         }
       })
@@ -84,8 +82,13 @@ export const InviteProvider = ({ children }) => {
       .from('environment_shares')
       .update({ status: 'accepted' })
       .eq('id', inviteId);
-    if (error) console.error('Erro ao aceitar convite:', error.message);
-    else setPendingInvites(prev => prev.filter(inv => inv.id !== inviteId));
+    if (error) {
+      console.error('Erro ao aceitar convite:', error.message);
+    } else {
+      setPendingInvites(prev => prev.filter(inv => inv.id !== inviteId));
+      setShowInviteModal(false);
+      setSelectedInvite(null);
+    }
   };
 
   const declineInvite = async (inviteId) => {
@@ -93,12 +96,27 @@ export const InviteProvider = ({ children }) => {
       .from('environment_shares')
       .delete()
       .eq('id', inviteId);
-    if (error) console.error('Erro ao recusar convite:', error.message);
-    else setPendingInvites(prev => prev.filter(inv => inv.id !== inviteId));
+    if (error) {
+      console.error('Erro ao recusar convite:', error.message);
+    } else {
+      setPendingInvites(prev => prev.filter(inv => inv.id !== inviteId));
+      setShowInviteModal(false);
+      setSelectedInvite(null);
+    }
   };
 
   return (
-    <InviteContext.Provider value={{ pendingInvites, acceptInvite, declineInvite, checkPendingInvites }}>
+    <InviteContext.Provider
+      value={{
+        pendingInvites,
+        selectedInvite,
+        showInviteModal,
+        setShowInviteModal,
+        acceptInvite,
+        declineInvite,
+        checkPendingInvites
+      }}
+    >
       {children}
     </InviteContext.Provider>
   );
