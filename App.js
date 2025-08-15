@@ -8,6 +8,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
+import SearchItemScreen from './screens/SearchItemScreen';
 import { BoxProvider } from './context/BoxContext';
 import { UserProvider } from './context/UserContext';
 import BoxDetailsScreen from './screens/BoxDetailsScreen';
@@ -152,6 +153,30 @@ export default function App() {
                   component={UserProfileScreen}
                   options={{
                     title: 'Perfil do Usuário',
+                    headerBackground: () => (
+                      <>
+                        <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            backgroundColor: 'white',
+                            borderTopLeftRadius: 80,
+                            borderTopRightRadius: 80,
+                          }}
+                        />
+                      </>
+                    ),
+                  }}
+                />
+                <Stack.Screen
+                  name="search"
+                  component={SearchItemScreen}
+                  options={{
+                    title: 'Buscar Objeto',
                     headerBackground: () => (
                       <>
                         <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />

@@ -46,6 +46,13 @@ export default function BottomBar() {
 
         <TouchableOpacity
           style={styles.button}
+          onPress={() => navigation.navigate('search')}
+        >
+          <Icon name="search" size={30} color="#333" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleLogout}
         >
           <Icon name="logout" size={28} color="#333" />
