@@ -176,7 +176,7 @@ export default function App() {
                   name="search"
                   component={SearchItemScreen}
                   options={{
-                    title: 'Buscar Objeto',
+                    title: 'Buscar',
                     headerBackground: () => (
                       <>
                         <View style={{ flex: 1, backgroundColor: '#e8e8e8' }} />
