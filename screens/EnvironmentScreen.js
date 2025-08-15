@@ -12,9 +12,7 @@ import GreetingHeader from '../components/GreetingHeader';
 export default function EnvironmentScreen({ navigation }) {
   const [environments, setEnvironments] = useState([]);
   const { boxes, fetchAllBoxes } = useContext(BoxContext);
-  const [searchType, setSearchType] = useState('Objeto');
   const [search, setSearch] = useState('');
-  const [searchBox, setSearchBox] = useState('');
   const [newEnvironmentName, setNewEnvironmentName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -182,32 +180,11 @@ export default function EnvironmentScreen({ navigation }) {
 
   // Filtrar ambiente
   const filterEnvironmentsBySearch = () => {
-    if (!search.trim() && !searchBox.trim()) {
-      return environments;
-    }
-
-    return environments.filter(env => {
-      const boxesInEnv = Object.values(boxes).filter(box =>
-        box && box.environment_id === env.id
-      );
-
-      if (searchType === 'Objeto' && search.trim()) {
-        return boxesInEnv.some(box =>
-          Array.isArray(box.items) &&
-          box.items.some(item =>
-            item.name.toLowerCase().includes(search.toLowerCase())
-          )
-        );
-      }
-
-      if (searchType === 'Compartimento' && searchBox.trim()) {
-        return boxesInEnv.some(box =>
-          box.name.toLowerCase().includes(searchBox.toLowerCase())
-        );
-      }
-
-      return true;
-    });
+    const term = search.trim().toLowerCase();
+    if (!term) return environments;
+    return environments.filter(env =>
+      (env.name || '').toLowerCase().includes(term)
+    );
   };
 
   const selectEnvironment = (environment) => {
@@ -388,39 +365,15 @@ export default function EnvironmentScreen({ navigation }) {
         <GreetingHeader />
         <View style={styles.TopBarContainer}>
           <View style={styles.topBarRow}>
-            <View style={styles.searchTypeToggle}>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  searchType === 'Objeto' && styles.toggleButtonActive
-                ]}
-                onPress={() => setSearchType('Objeto')}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    searchType === 'Objeto' && styles.toggleButtonTextActive
-                  ]}
-                >
-                  Objeto
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  searchType === 'Compartimento' && styles.toggleButtonActive
-                ]}
-                onPress={() => setSearchType('Compartimento')}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    searchType === 'Compartimento' && styles.toggleButtonTextActive
-                  ]}
-                >
-                  Compartimento
-                </Text>
-              </TouchableOpacity>
+            <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>
+              <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Pesquisar ambiente"
+                value={search}
+                onChangeText={setSearch}
+                placeholderTextColor="#aaa"
+              />
             </View>
             <TouchableOpacity
               onPress={() => setModalVisible(true)}
@@ -429,21 +382,8 @@ export default function EnvironmentScreen({ navigation }) {
               <Icon name="add" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-
-          <View style={styles.searchContainer}>
-            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={`Pesquisar ${searchType.toLowerCase()}`}
-              value={searchType === 'Objeto' ? search : searchBox}
-              onChangeText={text => {
-                if (searchType === 'Objeto') setSearch(text);
-                else setSearchBox(text);
-              }}
-              placeholderTextColor="#aaa"
-            />
-          </View>
         </View>
+
         <FlatList
           data={filterEnvironmentsBySearch()}
           renderItem={renderEnvironment}
@@ -564,6 +504,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     height: 40,
     marginVertical: 10,
+    flex: 1
   },
   searchIcon: {
     marginRight: 8,
