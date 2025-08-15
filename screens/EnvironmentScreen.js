@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 import { supabase } from '../supabase';
 import { Icon } from 'react-native-elements';
 import { useContext } from 'react';
@@ -23,6 +23,7 @@ export default function EnvironmentScreen({ navigation }) {
   const [shareEnvironmentId, setShareEnvironmentId] = useState(null);
   const [shareEmail, setShareEmail] = useState('');
   const [userId, setUserId] = useState(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     fetchEnvironments();
@@ -242,15 +243,67 @@ export default function EnvironmentScreen({ navigation }) {
 
   //Compartilhar Ambiente
   const handleShareEnvironment = async () => {
-    if (!shareEmail.trim()) {
-      Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
-      return;
-    }
+    const raw = (shareEmail || '').trim();
+    const fullEmail = raw.toLowerCase();
 
-    const fullEmail = shareEmail.trim();
+    const bail = (title, msg) => {
+      setIsSharing(false);
+      Alert.alert(title, msg);
+    };
+
+    if (!raw) return bail('Erro', 'Por favor, insira um e-mail válido.');
+
+    setIsSharing(true);
+
+    // validação de formato
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fullEmail);
+    if (!emailOk) return bail('Erro', 'E-mail inválido.');
 
     try {
-      // Busca o nome do ambiente antes de compartilhar
+      // usuário atual
+      const { data: { user: me }, error: meErr } = await supabase.auth.getUser();
+      if (meErr || !me) return bail('Erro', 'Usuário não autenticado.');
+      if (fullEmail === (me.email || '').toLowerCase()) {
+        return bail('Erro', 'Você não pode compartilhar o ambiente com você mesmo.');
+      }
+
+      // existe perfil?
+      const { data: targetProfile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .ilike('email', fullEmail)
+        .maybeSingle();
+
+      if (profileErr) {
+        console.log('[share] lookup profiles error:', profileErr);
+        return bail('Erro', 'Não foi possível verificar o e-mail no momento.');
+      }
+      if (!targetProfile) {
+        return bail('Usuário não encontrado', 'Não existe conta cadastrada com esse e-mail.');
+      }
+
+      // duplicado?
+      const { data: existing, error: existErr } = await supabase
+        .from('environment_shares')
+        .select('id, status')
+        .eq('environment_id', shareEnvironmentId)
+        .ilike('shared_with_user_email', fullEmail);
+
+      if (existErr) {
+        console.log('[share] check existing error:', existErr);
+        return bail('Erro', 'Não foi possível verificar convites existentes.');
+      }
+      if (existing?.length) {
+        const status = existing[0].status;
+        return bail(
+          'Atenção',
+          status === 'accepted'
+            ? 'Este ambiente já foi compartilhado com esse usuário.'
+            : 'Já existe um convite pendente para esse e-mail.'
+        );
+      }
+
+      // nome do ambiente
       const { data: envData, error: envError } = await supabase
         .from('environments')
         .select('name')
@@ -258,38 +311,34 @@ export default function EnvironmentScreen({ navigation }) {
         .single();
 
       if (envError || !envData) {
-        console.error('Erro ao buscar o nome do ambiente:', envError?.message);
-        Alert.alert('Erro', 'Não foi possível encontrar o nome do ambiente.');
-        return;
+        return bail('Erro', 'Não foi possível encontrar o nome do ambiente.');
       }
 
-      console.log(`Compartilhando ambiente: ${envData.name}`);
-
-      const { data, error } = await supabase
+      // cria convite
+      const { error: insertErr } = await supabase
         .from('environment_shares')
-        .insert([
-          {
-            environment_id: shareEnvironmentId,
-            shared_with_user_email: fullEmail,
-            status: 'pending'
-          }
-        ])
-        .select(`id, environment_id, status, shared_with_user_email, environments (name)`);
+        .insert([{
+          environment_id: shareEnvironmentId,
+          shared_with_user_email: fullEmail,
+          status: 'pending',
+        }]);
 
-      if (error) {
-        console.error('Erro ao compartilhar ambiente:', error.message);
-        Alert.alert('Erro', 'Não foi possível compartilhar o ambiente.');
-      } else {
-        console.log(`Compartilhamento criado para ${fullEmail} com ambiente: ${envData.name}`);
-        Alert.alert('Sucesso', `Convite enviado para ${fullEmail}!`);
-        setShareModalVisible(false);
-        setShareEmail('');
+      if (insertErr) {
+        console.log('[share] insert error:', insertErr);
+        return bail('Erro', 'Não foi possível compartilhar o ambiente.');
       }
-    } catch (error) {
-      console.error('Erro inesperado ao compartilhar ambiente:', error.message);
+
+      Alert.alert('Sucesso', `Convite para "${envData.name}" enviado para ${raw}!`);
+      setShareModalVisible(false);
+      setShareEmail('');
+    } catch (err) {
+      console.log('[share] unexpected error:', err);
       Alert.alert('Erro', 'Erro inesperado ao compartilhar ambiente.');
+    } finally {
+      setIsSharing(false);
     }
   };
+
 
   // Color
   const getColorForEnvironment = (environmentId) => {
@@ -436,23 +485,34 @@ export default function EnvironmentScreen({ navigation }) {
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>Compartilhar Ambiente</Text>
+
               <TextInput
                 style={styles.input}
                 placeholder="Digite o E-mail"
                 keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
                 value={shareEmail}
                 onChangeText={setShareEmail}
+                editable={!isSharing}
                 placeholderTextColor="#888"
               />
+
               <TouchableOpacity
-                style={styles.modalButton}
+                style={[styles.modalButton, isSharing && { opacity: 0.7 }]}
                 onPress={handleShareEnvironment}
+                disabled={isSharing}
               >
-                <Text style={styles.modalButtonText}>Compartilhar</Text>
+                {isSharing
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.modalButtonText}>Compartilhar</Text>
+                }
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShareModalVisible(false)}
+                disabled={isSharing}
               >
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>

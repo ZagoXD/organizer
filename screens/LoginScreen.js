@@ -78,7 +78,7 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Erro', 'Não foi possível enviar o e-mail de redefinição de senha.');
       console.error(error.message);
     } else {
-      Alert.alert('Sucesso', 'E-mail de redefinição de senha enviado!');
+      Alert.alert('Sucesso', 'Se existir uma conta com este e-mail, você receberá instruções!');
       setShowResetModal(false);
     }
   };

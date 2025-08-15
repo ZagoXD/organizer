@@ -62,10 +62,11 @@ export default function RegisterScreen({ navigation }) {
       }
 
       const userId = data?.user?.id;
+      const userEmail = (data?.user?.email || email || '').toLowerCase();
       if (userId) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{ id: userId, full_name: fullName, phone }]);
+          .insert([{ id: userId, full_name: fullName, phone, email: userEmail }]);
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError.message);

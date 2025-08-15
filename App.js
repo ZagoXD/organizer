@@ -78,7 +78,7 @@ export default function App() {
                   name="Environments"
                   component={EnvironmentScreen}
                   options={{
-                    title: 'Ambientes',
+                    title: '',
                     headerLeft: () => null,
                     headerBackground: () => (
                       <>
