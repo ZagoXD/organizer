@@ -9,9 +9,7 @@ import GreetingHeader from '../components/GreetingHeader';
 export default function HomeScreen({ route, navigation }) {
   const { environmentId } = route.params || {};
   const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext);
-  const [searchType, setSearchType] = useState('Objeto');
   const [search, setSearch] = useState('');
-  const [boxSearch, setBoxSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [newBoxName, setNewBoxName] = useState('');
 
@@ -47,54 +45,14 @@ export default function HomeScreen({ route, navigation }) {
     }
   }, [environmentId]);
 
-  // Pesquisa objetos dentro das caixas
-  const filterBoxesByItemSearch = () => {
-    if (!search.trim()) {
-      return Object.keys(boxes);
-    }
-
-    return Object.keys(boxes).filter(boxId =>
-      boxes[boxId] &&
-      Array.isArray(boxes[boxId].items) &&
-      boxes[boxId].items.some(item =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-      )
-    );
-  };
-
-  // Pesquisa caixa
-  const filterBoxesByNameSearch = () => {
-    if (!boxSearch.trim()) {
-      return Object.keys(boxes);
-    }
-
-    return Object.keys(boxes).filter(boxId =>
-      boxes[boxId] &&
-      boxes[boxId].name.toLowerCase().includes(boxSearch.toLowerCase())
-    );
-  };
-
   const combinedFilteredBoxes = () => {
-    if (!search.trim()) {
-      return Object.keys(boxes);
-    }
+    const term = search.trim().toLowerCase();
+    if (!term) return Object.keys(boxes);
 
-    if (searchType === 'Objeto') {
-      return Object.keys(boxes).filter(boxId =>
-        boxes[boxId] &&
-        Array.isArray(boxes[boxId].items) &&
-        boxes[boxId].items.some(item =>
-          item.name.toLowerCase().includes(search.toLowerCase())
-        )
-      );
-    } else if (searchType === 'Compartimento') {
-      return Object.keys(boxes).filter(boxId =>
-        boxes[boxId] &&
-        boxes[boxId].name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    return Object.keys(boxes);
+    return Object.keys(boxes).filter(boxId =>
+      boxes[boxId] &&
+      (boxes[boxId].name || '').toLowerCase().includes(term)
+    );
   };
 
   const handleRemoveBox = (boxId) => {
@@ -168,60 +126,23 @@ export default function HomeScreen({ route, navigation }) {
         <GreetingHeader />
         <View style={styles.TopBarContainer}>
           <View style={styles.searchWrapperRow}>
-            <View style={styles.searchTypeToggle}>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  searchType === 'Objeto' && styles.toggleButtonActive
-                ]}
-                onPress={() => setSearchType('Objeto')}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    searchType === 'Objeto' && styles.toggleButtonTextActive
-                  ]}
-                >
-                  Objeto
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  searchType === 'Compartimento' && styles.toggleButtonActive
-                ]}
-                onPress={() => setSearchType('Compartimento')}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    searchType === 'Compartimento' && styles.toggleButtonTextActive
-                  ]}
-                >
-                  Compartimento
-                </Text>
-              </TouchableOpacity>
+            <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>
+              <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Pesquisar compartimento"
+                value={search}
+                onChangeText={setSearch}
+                placeholderTextColor="#aaa"
+              />
             </View>
 
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              style={styles.floatingButton}
-            >
+            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.floatingButton}>
               <Icon name="add" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-
-          <View style={styles.searchContainer}>
-            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={`Pesquisar ${searchType.toLowerCase()}`}
-              value={search}
-              onChangeText={setSearch}
-              placeholderTextColor="#aaa"
-            />
-          </View>
         </View>
+
         <FlatList
           data={boxList}
           renderItem={renderItem}
@@ -280,6 +201,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     height: 40,
     marginVertical: 10,
+    flex: 1
   },
   searchIcon: {
     marginRight: 8,
@@ -296,9 +218,9 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   TopBarContainer: {
-  width: '100%',
-  marginBottom: 10,
-},
+    width: '100%',
+    marginBottom: 10,
+  },
   cancelBtnCreateBox: {
     marginTop: 10,
   },
@@ -442,9 +364,9 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   searchWrapperRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: 5,
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
 });
