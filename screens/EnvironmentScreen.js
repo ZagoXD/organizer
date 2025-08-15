@@ -22,6 +22,9 @@ export default function EnvironmentScreen({ navigation }) {
   const [shareEmail, setShareEmail] = useState('');
   const [userId, setUserId] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [accessList, setAccessList] = useState([]);
+  const [isAccessLoading, setIsAccessLoading] = useState(false);
+  const [revokingId, setRevokingId] = useState(null);
 
   useEffect(() => {
     fetchEnvironments();
@@ -308,6 +311,7 @@ export default function EnvironmentScreen({ navigation }) {
       Alert.alert('Sucesso', `Convite para "${envData.name}" enviado para ${raw}!`);
       setShareModalVisible(false);
       setShareEmail('');
+      fetchAccessList(shareEnvironmentId);
     } catch (err) {
       console.log('[share] unexpected error:', err);
       Alert.alert('Erro', 'Erro inesperado ao compartilhar ambiente.');
@@ -322,6 +326,98 @@ export default function EnvironmentScreen({ navigation }) {
     const colors = ['#FFC4B6', '#D1B6FF'];
     const index = environmentId % colors.length;
     return colors[index];
+  };
+
+  const fetchAccessList = async (envId) => {
+    if (!envId) return;
+    setIsAccessLoading(true);
+    try {
+      // 1) busca os compartilhamentos do ambiente
+      const { data: shares, error } = await supabase
+        .from('environment_shares')
+        .select('id, shared_with_user_email, status, created_at')
+        .eq('environment_id', envId)
+        .order('status', { ascending: false })   // "accepted" antes de "pending" (ajuste se quiser)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // 2) busca nomes dos perfis (opcional; se não existir, mostra só email)
+      const emails = (shares || []).map(s => (s.shared_with_user_email || '').toLowerCase());
+      let byEmail = {};
+      if (emails.length) {
+        const { data: profs, error: profErr } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('email', emails);
+
+        if (!profErr && profs) {
+          byEmail = Object.fromEntries(
+            profs.map(p => [(p.email || '').toLowerCase(), p])
+          );
+        }
+      }
+
+      const list = (shares || []).map(s => ({
+        id: s.id,
+        email: s.shared_with_user_email,
+        full_name: byEmail[(s.shared_with_user_email || '').toLowerCase()]?.full_name || null,
+        status: s.status, // 'pending' | 'accepted' (ou o que você usar)
+      }));
+
+      setAccessList(list);
+    } catch (e) {
+      console.error('Erro ao carregar acessos:', e);
+      Alert.alert('Erro', 'Não foi possível carregar a lista de acessos.');
+    } finally {
+      setIsAccessLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = (shareId, email) => {
+    Alert.alert(
+      'Remover acesso',
+      `Tem certeza que deseja remover o acesso de ${email}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            setRevokingId(shareId);
+            try {
+              // Dica de segurança: amarra também ao ambiente aberto
+              const { data, error } = await supabase
+                .from('environment_shares')
+                .delete()
+                .match({ id: shareId, environment_id: shareEnvironmentId })
+                .select('id'); // força retornar as linhas afetadas
+
+              if (error) {
+                console.error('[revoke] delete error:', error);
+                Alert.alert('Erro', 'Não foi possível remover o acesso.');
+                return;
+              }
+
+              if (!data || data.length === 0) {
+                // RLS pode bloquear e não dar erro — só "0 linhas"
+                Alert.alert('Atenção', 'Nada foi removido (verifique permissões).');
+                return;
+              }
+
+              // sucesso: atualiza a lista local
+              setAccessList(prev => prev.filter(s => s.id !== shareId));
+              Alert.alert('Pronto', `Acesso de ${email} removido.`);
+            } catch (e) {
+              console.error('[revoke] unexpected:', e);
+              Alert.alert('Erro', 'Não foi possível remover o acesso.');
+            } finally {
+              setRevokingId(null);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderEnvironment = ({ item }) => {
@@ -347,6 +443,7 @@ export default function EnvironmentScreen({ navigation }) {
             <TouchableOpacity onPress={() => {
               setShareEnvironmentId(item.id);
               setShareModalVisible(true);
+              fetchAccessList(item.id)
             }}>
               <Icon name="share" size={24} color="blue" />
             </TouchableOpacity>
@@ -421,14 +518,14 @@ export default function EnvironmentScreen({ navigation }) {
           </View>
         </Modal>
 
-        <Modal visible={shareModalVisible} animationType="slide" transparent={true}>
+        <Modal visible={shareModalVisible} animationType="slide" transparent>
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>Compartilhar Ambiente</Text>
 
               <TextInput
                 style={styles.input}
-                placeholder="Digite o E-mail"
+                placeholder="Digite o e-mail para compartilhar"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -445,16 +542,101 @@ export default function EnvironmentScreen({ navigation }) {
               >
                 {isSharing
                   ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={styles.modalButtonText}>Compartilhar</Text>
+                  : <Text style={styles.modalButtonText}>Enviar Convite</Text>
                 }
               </TouchableOpacity>
+
+              <View style={{ marginTop: 8, marginBottom: 4 }}>
+                <Text style={styles.sectionTitle}>Quem tem acesso</Text>
+                <Text style={styles.sectionHint}>Você (proprietário) sempre terá acesso.</Text>
+              </View>
+
+              {isAccessLoading ? (
+                <ActivityIndicator size="small" color="#5db55b" />
+              ) : accessList.length === 0 ? (
+                <Text style={styles.emptySharesText}>Nenhum usuário convidado ainda.</Text>
+              ) : (
+                <FlatList
+                  data={accessList}
+                  keyExtractor={(s) => s.id.toString()}
+                  style={{ maxHeight: 220, marginTop: 6 }}
+                  ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                  renderItem={({ item }) => {
+                    const isBusy = revokingId === item.id;
+                    const isAccepted = item.status === 'accepted';
+
+                    const initial =
+                      (item.full_name || item.email || '?').trim().charAt(0).toUpperCase() || '?';
+
+                    return (
+                      <View style={styles.shareRow}>
+                        {/* Avatar */}
+                        <View style={styles.avatar}>
+                          <Text style={styles.avatarText}>{initial}</Text>
+                        </View>
+
+                        {/* Nome + Email (1 linha cada) */}
+                        <View style={styles.shareInfo}>
+                          <Text
+                            style={styles.shareName}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {item.full_name || item.email}
+                          </Text>
+                          {item.full_name && (
+                            <Text
+                              style={styles.shareEmail}
+                              numberOfLines={1}
+                              ellipsizeMode="middle"
+                            >
+                              {item.email}
+                            </Text>
+                          )}
+                        </View>
+
+                        {/* Coluna de ações (ícones empilhados) */}
+                        <View style={styles.actionsCol}>
+                          <View
+                            style={[
+                              styles.statusIconWrap,
+                              isAccepted ? styles.statusOkBg : styles.statusPendingBg,
+                            ]}
+                          >
+                            <Icon
+                              name={isAccepted ? 'check-circle' : 'hourglass-empty'}
+                              type="material"
+                              size={18}
+                              color={isAccepted ? '#2e7d32' : '#8a5100'}
+                            />
+                          </View>
+
+                          <TouchableOpacity
+                            style={styles.iconButtonCircle}
+                            onPress={() => handleRevokeAccess(item.id, item.email)}
+                            disabled={isBusy}
+                            hitSlop={{ top: 6, left: 6, right: 6, bottom: 6 }}
+                            activeOpacity={0.85}
+                          >
+                            {isBusy ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <Icon name="delete" type="material" size={18} color="#fff" />
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  }}
+                />
+              )}
 
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShareModalVisible(false)}
-                disabled={isSharing}
+                disabled={isSharing || isAccessLoading}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>Fechar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -548,40 +730,152 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalView: {
-    width: '90%',
+    width: '92%',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
+    borderRadius: 14,
+    padding: 18,
+    alignItems: 'stretch',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     elevation: 5,
+    maxHeight: '85%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 12,
+    color: '#222',
+    textAlign: 'left',
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 10,
     padding: 12,
     fontSize: 16,
     color: '#333',
-    marginBottom: 15,
+    marginBottom: 10,
     backgroundColor: '#f9f9f9',
   },
   modalButton: {
     width: '100%',
     backgroundColor: '#5db55b',
-    paddingVertical: 15,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modalButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+  },
+  sectionHint: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  emptySharesText: {
+    color: '#666',
+    marginTop: 8,
+  },
+  shareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EAF6ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  avatarText: {
+    color: '#2e7d32',
+    fontWeight: '800',
+  },
+  shareInfo: { flex: 1, minWidth: 0 },
+  shareName: { fontSize: 14, fontWeight: '700', color: '#111' },
+  shareEmail: { fontSize: 12, color: '#666', marginTop: 2 },
+  actionsCol: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    paddingVertical: 2,
+    marginLeft: 10,
+    gap: 8,
+  },
+  statusIconWrap: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusOkBg: { backgroundColor: '#E7F4EA' },
+  statusPendingBg: { backgroundColor: '#FFF4E5' },
+  iconButtonCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#e53935',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginRight: 8,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  badgeAccepted: { backgroundColor: '#E7F4EA' },
+  badgeAcceptedText: { color: '#2e7d32' },
+  badgePending: { backgroundColor: '#FFF4E5' },
+  badgePendingText: { color: '#8a5100' },
+  revokeButton: {
+    backgroundColor: '#e53935',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  revokeButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  cancelButton: {
+    width: '100%',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: '600',
   },
   cancelButton: {
     width: '100%',
