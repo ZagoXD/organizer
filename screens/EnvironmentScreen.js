@@ -163,7 +163,6 @@ export default function EnvironmentScreen({ navigation }) {
         return;
       }
 
-      // Verifica se os dados foram retornados corretamente
       if (data && data.length > 0) {
         const newEnvironment = data[0];
         setEnvironments([...environments, newEnvironment]);
@@ -171,7 +170,6 @@ export default function EnvironmentScreen({ navigation }) {
         console.error('Nenhum ambiente foi retornado após a inserção.');
       }
 
-      // Limpa o campo de texto e fecha o modal
       setNewEnvironmentName('');
       setModalVisible(false);
     } catch (error) {
@@ -329,17 +327,15 @@ export default function EnvironmentScreen({ navigation }) {
     if (!envId) return;
     setIsAccessLoading(true);
     try {
-      // 1) busca os compartilhamentos do ambiente
       const { data: shares, error } = await supabase
         .from('environment_shares')
         .select('id, shared_with_user_email, status, created_at')
         .eq('environment_id', envId)
-        .order('status', { ascending: false })   // "accepted" antes de "pending" (ajuste se quiser)
+        .order('status', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // 2) busca nomes dos perfis (opcional; se não existir, mostra só email)
       const emails = (shares || []).map(s => (s.shared_with_user_email || '').toLowerCase());
       let byEmail = {};
       if (emails.length) {
@@ -359,7 +355,7 @@ export default function EnvironmentScreen({ navigation }) {
         id: s.id,
         email: s.shared_with_user_email,
         full_name: byEmail[(s.shared_with_user_email || '').toLowerCase()]?.full_name || null,
-        status: s.status, // 'pending' | 'accepted' (ou o que você usar)
+        status: s.status,
       }));
 
       setAccessList(list);
