@@ -73,7 +73,7 @@ export default function LoginScreen({ navigation }) {
 
     setIsSendingResetEmail(true);
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: 'https://reset-password-organizer.vercel.app/',
+      redirectTo: 'https://reset-password-organizer-chi.vercel.app/',
     });
     setIsSendingResetEmail(false);
 
