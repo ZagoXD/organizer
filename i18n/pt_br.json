@@ -177,5 +177,21 @@
   },
   "lang": {
     "select": "Selecionar Idioma"
+  },
+  "history": {
+    "title": "Histórico de ações",
+    "loading": "Carregando…",
+    "empty": "Nenhuma atividade ainda.",
+    "you": "Você",
+    "someone": "Alguém",
+    "ago_pt": "há {{time}}",
+    "ago_en": "{{time}} ago",
+    "msg": {
+      "box_create": "{{user}} adicionou o compartimento \"{{box}}\"",
+      "box_delete": "{{user}} removeu o compartimento \"{{box}}\"",
+      "item_create": "{{user}} adicionou {{qty}} de \"{{item}}\" em \"{{box}}\"",
+      "item_update": "{{user}} atualizou \"{{item}}\" em \"{{box}}\" ({{from}} → {{to}})",
+      "item_delete": "{{user}} removeu \"{{item}}\" de \"{{box}}\""
+    }
   }
 }
