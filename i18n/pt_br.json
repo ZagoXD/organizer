@@ -172,5 +172,8 @@
       "error": "Não foi possível enviar o e-mail de redefinição de senha.",
       "success": "Se existir uma conta com este e-mail, você receberá instruções!"
     }
+  },
+  "lang": {
+    "select": "Selecionar Idioma"
   }
 }
