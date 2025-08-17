@@ -7,7 +7,7 @@ import { BoxContext } from '../context/BoxContext';
 import { useFocusEffect } from '@react-navigation/native';
 import BottomBar from '../components/BottomBar';
 import GreetingHeader from '../components/GreetingHeader';
-
+import { useTranslation } from 'react-i18next';
 
 export default function EnvironmentScreen({ navigation }) {
   const [environments, setEnvironments] = useState([]);
@@ -25,6 +25,7 @@ export default function EnvironmentScreen({ navigation }) {
   const [accessList, setAccessList] = useState([]);
   const [isAccessLoading, setIsAccessLoading] = useState(false);
   const [revokingId, setRevokingId] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchEnvironments();
@@ -138,7 +139,7 @@ export default function EnvironmentScreen({ navigation }) {
   // Função para adicionar um novo ambiente
   const addEnvironment = async () => {
     if (!newEnvironmentName.trim()) {
-      Alert.alert('Erro', 'Por favor, insira um nome para o ambiente.');
+      Alert.alert(t('common.error'), t('environments.create_missing_name'));
       return;
     }
 
@@ -197,13 +198,13 @@ export default function EnvironmentScreen({ navigation }) {
   //Deleta Ambiente
   const handleDeleteEnvironment = (environmentId) => {
     Alert.alert(
-      "Confirmação",
-      "Tem certeza que deseja excluir este ambiente?",
+      t('environments.delete_confirm_title'),
+      t('environments.delete_confirm_msg'),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: "Excluir",
-          style: "destructive",
+          text: t('common.delete'),
+          style: 'destructive',
           onPress: () => {
             (async () => {
               try {
@@ -231,23 +232,21 @@ export default function EnvironmentScreen({ navigation }) {
       Alert.alert(title, msg);
     };
 
-    if (!raw) return bail('Erro', 'Por favor, insira um e-mail válido.');
+    if (!raw) return bail(t('common.error'), t('share.errors.need_email'));
 
     setIsSharing(true);
 
-    // validação de formato
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fullEmail);
-    if (!emailOk) return bail('Erro', 'E-mail inválido.');
+    if (!emailOk) return bail(t('common.error'), t('share.errors.invalid_email'));
 
     try {
-      // usuário atual
       const { data: { user: me }, error: meErr } = await supabase.auth.getUser();
-      if (meErr || !me) return bail('Erro', 'Usuário não autenticado.');
+      if (meErr || !me) return bail(t('common.error'), t('share.errors.unauthenticated'));
+
       if (fullEmail === (me.email || '').toLowerCase()) {
-        return bail('Erro', 'Você não pode compartilhar o ambiente com você mesmo.');
+        return bail(t('common.error'), t('share.errors.self_share'));
       }
 
-      // existe perfil?
       const { data: targetProfile, error: profileErr } = await supabase
         .from('profiles')
         .select('id, email, full_name')
@@ -256,13 +255,12 @@ export default function EnvironmentScreen({ navigation }) {
 
       if (profileErr) {
         console.log('[share] lookup profiles error:', profileErr);
-        return bail('Erro', 'Não foi possível verificar o e-mail no momento.');
+        return bail(t('common.error'), t('share.errors.lookup_fail'));
       }
       if (!targetProfile) {
-        return bail('Usuário não encontrado', 'Não existe conta cadastrada com esse e-mail.');
+        return bail(t('share.errors.user_not_found_title'), t('share.errors.user_not_found_msg'));
       }
 
-      // duplicado?
       const { data: existing, error: existErr } = await supabase
         .from('environment_shares')
         .select('id, status')
@@ -271,19 +269,18 @@ export default function EnvironmentScreen({ navigation }) {
 
       if (existErr) {
         console.log('[share] check existing error:', existErr);
-        return bail('Erro', 'Não foi possível verificar convites existentes.');
+        return bail(t('common.error'), t('share.errors.existing_check_fail'));
       }
       if (existing?.length) {
         const status = existing[0].status;
         return bail(
-          'Atenção',
+          t('common.attention'),
           status === 'accepted'
-            ? 'Este ambiente já foi compartilhado com esse usuário.'
-            : 'Já existe um convite pendente para esse e-mail.'
+            ? t('share.errors.already_shared')
+            : t('share.errors.invite_pending')
         );
       }
 
-      // nome do ambiente
       const { data: envData, error: envError } = await supabase
         .from('environments')
         .select('name')
@@ -291,10 +288,9 @@ export default function EnvironmentScreen({ navigation }) {
         .single();
 
       if (envError || !envData) {
-        return bail('Erro', 'Não foi possível encontrar o nome do ambiente.');
+        return bail(t('common.error'), t('share.errors.env_not_found'));
       }
 
-      // cria convite
       const { error: insertErr } = await supabase
         .from('environment_shares')
         .insert([{
@@ -305,21 +301,23 @@ export default function EnvironmentScreen({ navigation }) {
 
       if (insertErr) {
         console.log('[share] insert error:', insertErr);
-        return bail('Erro', 'Não foi possível compartilhar o ambiente.');
+        return bail(t('common.error'), t('share.errors.insert_fail'));
       }
 
-      Alert.alert('Sucesso', `Convite para "${envData.name}" enviado para ${raw}!`);
+      Alert.alert(
+        t('common.success'),
+        t('share.success', { env: envData.name, email: raw })
+      );
       setShareModalVisible(false);
       setShareEmail('');
       fetchAccessList(shareEnvironmentId);
     } catch (err) {
       console.log('[share] unexpected error:', err);
-      Alert.alert('Erro', 'Erro inesperado ao compartilhar ambiente.');
+      Alert.alert(t('common.error'), t('share.errors.unexpected'));
     } finally {
       setIsSharing(false);
     }
   };
-
 
   // Color
   const getColorForEnvironment = (environmentId) => {
@@ -386,12 +384,11 @@ export default function EnvironmentScreen({ navigation }) {
           onPress: async () => {
             setRevokingId(shareId);
             try {
-              // Dica de segurança: amarra também ao ambiente aberto
               const { data, error } = await supabase
                 .from('environment_shares')
                 .delete()
                 .match({ id: shareId, environment_id: shareEnvironmentId })
-                .select('id'); // força retornar as linhas afetadas
+                .select('id');
 
               if (error) {
                 console.error('[revoke] delete error:', error);
@@ -400,12 +397,10 @@ export default function EnvironmentScreen({ navigation }) {
               }
 
               if (!data || data.length === 0) {
-                // RLS pode bloquear e não dar erro — só "0 linhas"
                 Alert.alert('Atenção', 'Nada foi removido (verifique permissões).');
                 return;
               }
 
-              // sucesso: atualiza a lista local
               setAccessList(prev => prev.filter(s => s.id !== shareId));
               Alert.alert('Pronto', `Acesso de ${email} removido.`);
             } catch (e) {
@@ -434,7 +429,7 @@ export default function EnvironmentScreen({ navigation }) {
           <View style={styles.environmentTitleRow}>
             <Icon name="home" size={20} color="#000" style={styles.iconHome} />
             <Text style={styles.environmentName}>
-              {item.name} {isShared && <Text style={{ fontSize: 14, color: '#555' }}>(compartilhado)</Text>}
+              {item.name} {isShared && <Text style={{ fontSize: 14, color: '#555' }}>{t('environments.shared_suffix')}</Text>}
             </Text>
           </View>
         </TouchableOpacity>
@@ -466,7 +461,7 @@ export default function EnvironmentScreen({ navigation }) {
               <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Pesquisar ambiente"
+                placeholder={t('environments.search_ph')}
                 value={search}
                 onChangeText={setSearch}
                 placeholderTextColor="#aaa"
@@ -485,16 +480,16 @@ export default function EnvironmentScreen({ navigation }) {
           data={filterEnvironmentsBySearch()}
           renderItem={renderEnvironment}
           keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={<Text>Nenhum ambiente encontrado.</Text>}
+          ListEmptyComponent={<Text>{t('environments.list_empty')}</Text>}
         />
 
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Adicionar Novo Ambiente</Text>
+              <Text style={styles.modalTitle}>{t('environments.create_title')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Nome do ambiente"
+                placeholder={t('environments.create_name_ph')}
                 value={newEnvironmentName}
                 onChangeText={setNewEnvironmentName}
                 placeholderTextColor="#888"
@@ -505,14 +500,14 @@ export default function EnvironmentScreen({ navigation }) {
                 disabled={loading}
               >
                 <Text style={styles.modalButtonText}>
-                  {loading ? "Criando..." : "Criar"}
+                  {loading ? t('environments.creating') : t('environments.create_cta')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -521,11 +516,11 @@ export default function EnvironmentScreen({ navigation }) {
         <Modal visible={shareModalVisible} animationType="slide" transparent>
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Compartilhar Ambiente</Text>
+              <Text style={styles.modalTitle}>{t('share.title')}</Text>
 
               <TextInput
                 style={styles.input}
-                placeholder="Digite o e-mail para compartilhar"
+                placeholder={t('share.invite_ph')}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -542,19 +537,19 @@ export default function EnvironmentScreen({ navigation }) {
               >
                 {isSharing
                   ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={styles.modalButtonText}>Enviar Convite</Text>
+                  : <Text style={styles.modalButtonText}>{t('share.send_invite')}</Text>
                 }
               </TouchableOpacity>
 
               <View style={{ marginTop: 8, marginBottom: 4 }}>
-                <Text style={styles.sectionTitle}>Quem tem acesso</Text>
-                <Text style={styles.sectionHint}>Você (proprietário) sempre terá acesso.</Text>
+                <Text style={styles.sectionTitle}>{t('share.access_title')}</Text>
+                <Text style={styles.sectionHint}>{t('share.access_hint_owner')}</Text>
               </View>
 
               {isAccessLoading ? (
                 <ActivityIndicator size="small" color="#5db55b" />
               ) : accessList.length === 0 ? (
-                <Text style={styles.emptySharesText}>Nenhum usuário convidado ainda.</Text>
+                <Text style={styles.emptySharesText}>{t('share.none')}</Text>
               ) : (
                 <FlatList
                   data={accessList}
@@ -636,7 +631,7 @@ export default function EnvironmentScreen({ navigation }) {
                 onPress={() => setShareModalVisible(false)}
                 disabled={isSharing || isAccessLoading}
               >
-                <Text style={styles.cancelButtonText}>Fechar</Text>
+                <Text style={styles.cancelButtonText}>{t('share.close')}</Text>
               </TouchableOpacity>
             </View>
           </View>

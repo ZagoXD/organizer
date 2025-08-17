@@ -1,0 +1,179 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "no_name": "Sin nombre",
+    "error": "Error",
+    "success": "Éxito",
+    "unexpected": "Ocurrió un error inesperado.",
+    "delete": "Eliminar",
+    "attention": "Atención",
+    "yes": "Sí"
+  },
+  "screens": {
+    "home": {
+      "title": "Compartimentos"
+    },
+    "boxDetails": {
+      "title": "Detalles del compartimento"
+    },
+    "userProfile": {
+      "title": "Perfil del usuario"
+    }
+  },
+  "session": {
+    "logout_title": "Salir",
+    "logout_msg": "¿Seguro que deseas salir?"
+  },
+  "search": {
+    "title": "Buscar",
+    "modes": {
+      "items": "Objetos",
+      "boxes": "Compartimentos"
+    },
+    "placeholders": {
+      "items": "Buscar objeto",
+      "boxes": "Buscar compartimento"
+    },
+    "helper_prefix": "Escribe para buscar:",
+    "none": "No se encontraron resultados.",
+    "env": "Entorno",
+    "box": "Compartimento",
+    "item": "Objeto"
+  },
+  "boxes": {
+    "empty": "No se encontraron compartimentos para este entorno.",
+    "add_title": "Añadir nuevo compartimento",
+    "name_ph": "Nombre del compartimento",
+    "add_cta": "Añadir compartimento",
+    "confirm_title": "Confirmación",
+    "confirm_msg": "¿Seguro que deseas eliminar este compartimento? Todos tus objetos se perderán."
+  },
+  "items": {
+    "search_ph": "Buscar objeto",
+    "empty": "No se encontraron ítems.",
+    "quantity": "Cantidad",
+    "add_title": "Añadir nuevo ítem",
+    "edit_title": "Editar ítem",
+    "name_ph": "Nombre del ítem",
+    "qty_ph": "Cantidad",
+    "save_changes": "Guardar cambios",
+    "add_cta": "Añadir",
+    "update_error": "No se pudo actualizar el ítem.",
+    "duplicate_error": "Ya existe un ítem con este nombre en este compartimento",
+    "confirm_delete_title": "Eliminar ítem",
+    "confirm_delete_msg": "¿Seguro que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+    "remove_error": "No se pudo eliminar el ítem."
+  },
+  "environments": {
+    "search_ph": "Buscar entorno",
+    "list_empty": "No se encontraron entornos.",
+    "shared_suffix": "(compartido)",
+    "create_title": "Añadir nuevo entorno",
+    "create_name_ph": "Nombre del entorno",
+    "create_cta": "Crear",
+    "creating": "Creando...",
+    "create_missing_name": "Por favor, introduce un nombre para el entorno.",
+    "delete_confirm_title": "Confirmación",
+    "delete_confirm_msg": "¿Seguro que deseas eliminar este entorno?"
+  },
+  "share": {
+    "title": "Compartir entorno",
+    "invite_ph": "Introduce el correo para compartir",
+    "send_invite": "Enviar invitación",
+    "access_title": "Quién tiene acceso",
+    "access_hint_owner": "Tú (propietario) siempre tendrás acceso.",
+    "none": "Aún no hay usuarios invitados.",
+    "close": "Cerrar",
+    "success": "¡Invitación para \"{{env}}\" enviada a {{email}}!",
+    "errors": {
+      "need_email": "Por favor, introduce un correo válido.",
+      "invalid_email": "Correo electrónico inválido.",
+      "unauthenticated": "Usuario no autenticado.",
+      "self_share": "No puedes compartir el entorno contigo mismo.",
+      "lookup_fail": "No se pudo verificar el correo en este momento.",
+      "user_not_found_title": "Usuario no encontrado",
+      "user_not_found_msg": "No existe una cuenta registrada con ese correo.",
+      "existing_check_fail": "No se pudieron verificar invitaciones existentes.",
+      "already_shared": "Este entorno ya fue compartido con ese usuario.",
+      "invite_pending": "Ya existe una invitación pendiente para ese correo.",
+      "env_not_found": "No se pudo encontrar el nombre del entorno.",
+      "insert_fail": "No se pudo compartir el entorno.",
+      "unexpected": "Error inesperado al compartir el entorno."
+    }
+  },
+  "invites": {
+    "modal_text": "Has sido invitado al entorno: {{env}}."
+  },
+  "login": {
+    "welcome": "Bienvenido",
+    "subtitle": "Accede a tu cuenta",
+    "email_ph": "Correo electrónico",
+    "password_ph": "Contraseña",
+    "remember_me": "Mantenerme conectado",
+    "sign_in": "Iniciar sesión",
+    "no_account": "¿No tienes una cuenta?",
+    "register": "Regístrate",
+    "forgot_password": "Olvidé mi contraseña"
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "subtitle": "Completa los datos abajo",
+    "placeholders": {
+      "full_name": "Nombre completo",
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirm_password": "Confirmar contraseña"
+    },
+    "cta": "Registrarse",
+    "have_account": "¿Ya tienes una cuenta?",
+    "sign_in": "Iniciar sesión",
+    "success": "¡Usuario registrado con éxito!",
+    "errors": {
+      "passwords_not_match": "¡Las contraseñas no coinciden!",
+      "profile_create": "Hubo un problema al crear el perfil. Inténtalo de nuevo.",
+      "unexpected": "Ocurrió un error inesperado."
+    }
+  },
+  "greetingHeader": {
+    "hello": "¡Hola!",
+    "hello_name": "¡Hola, {{name}}!"
+  },
+  "userProfile": {
+    "title": "Mi perfil",
+    "fields": {
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono"
+    },
+    "actions": {
+      "change_password": "Cambiar contraseña"
+    },
+    "errors": {
+      "user_not_found": "Usuario no encontrado.",
+      "load_failed": "No se pudo cargar el perfil."
+    }
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Credenciales inválidas",
+      "email_registered": "Correo ya registrado",
+      "user_registered": "Usuario ya registrado",
+      "missing_email": "Ingresa el correo para continuar",
+      "password_min": "La contraseña debe tener al menos 6 caracteres",
+      "user_not_confirmed": "Usuario no confirmado"
+    },
+    "reset": {
+      "title": "Recuperar contraseña",
+      "placeholder": "Introduce tu correo",
+      "send": "Enviar correo",
+      "missing_email": "Por favor, introduce un correo.",
+      "error": "No se pudo enviar el correo de restablecimiento de contraseña.",
+      "success": "Si existe una cuenta con este correo, ¡recibirás instrucciones!"
+    }
+  },
+  "lang": {
+    "select": "Seleccionar Idioma"
+  }
+}

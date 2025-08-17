@@ -1,0 +1,179 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "no_name": "Sem nome",
+    "error": "Erro",
+    "success": "Sucesso",
+    "unexpected": "Ocorreu um erro inesperado.",
+    "delete": "Excluir",
+    "attention": "Atenção",
+    "yes": "Sim"
+  },
+  "screens": {
+    "home": {
+      "title": "Compartimentos"
+    },
+    "boxDetails": {
+      "title": "Detalhes do Compartimento"
+    },
+    "userProfile": {
+      "title": "Perfil do Usuário"
+    }
+  },
+  "session": {
+    "logout_title": "Sair",
+    "logout_msg": "Tem certeza de que deseja sair?"
+  },
+  "search": {
+    "title": "Buscar",
+    "modes": {
+      "items": "Objetos",
+      "boxes": "Compartimentos"
+    },
+    "placeholders": {
+      "items": "Pesquisar objeto",
+      "boxes": "Pesquisar compartimento"
+    },
+    "helper_prefix": "Digite para localizar:",
+    "none": "Nenhum resultado encontrado.",
+    "env": "Ambiente",
+    "box": "Compartimento",
+    "item": "Objeto"
+  },
+  "boxes": {
+    "empty": "Nenhum compartimento encontrado para este ambiente.",
+    "add_title": "Adicionar Novo Compartimento",
+    "name_ph": "Nome do compartimento",
+    "add_cta": "Adicionar Compartimento",
+    "confirm_title": "Confirmação",
+    "confirm_msg": "Tem certeza que deseja excluir este compartimento? Todos seus objetos serão perdidos"
+  },
+  "items": {
+    "search_ph": "Pesquisar objeto",
+    "empty": "Nenhum item encontrado.",
+    "quantity": "Quantidade",
+    "add_title": "Adicionar Novo Item",
+    "edit_title": "Editar Item",
+    "name_ph": "Nome do item",
+    "qty_ph": "Quantidade",
+    "save_changes": "Salvar Alterações",
+    "add_cta": "Adicionar",
+    "update_error": "Não foi possível atualizar o item.",
+    "duplicate_error": "Um item com este nome já existe neste compartimento",
+    "confirm_delete_title": "Remover item",
+    "confirm_delete_msg": "Tem certeza que deseja remover \"{{name}}\"? Esta ação não pode ser desfeita.",
+    "remove_error": "Não foi possível remover o item."
+  },
+  "environments": {
+    "search_ph": "Pesquisar ambiente",
+    "list_empty": "Nenhum ambiente encontrado.",
+    "shared_suffix": "(compartilhado)",
+    "create_title": "Adicionar Novo Ambiente",
+    "create_name_ph": "Nome do ambiente",
+    "create_cta": "Criar",
+    "creating": "Criando...",
+    "create_missing_name": "Por favor, insira um nome para o ambiente.",
+    "delete_confirm_title": "Confirmação",
+    "delete_confirm_msg": "Tem certeza que deseja excluir este ambiente?"
+  },
+  "share": {
+    "title": "Compartilhar Ambiente",
+    "invite_ph": "Digite o e-mail para compartilhar",
+    "send_invite": "Enviar Convite",
+    "access_title": "Quem tem acesso",
+    "access_hint_owner": "Você (proprietário) sempre terá acesso.",
+    "none": "Nenhum usuário convidado ainda.",
+    "close": "Fechar",
+    "success": "Convite para \"{{env}}\" enviado para {{email}}!",
+    "errors": {
+      "need_email": "Por favor, insira um e-mail válido.",
+      "invalid_email": "E-mail inválido.",
+      "unauthenticated": "Usuário não autenticado.",
+      "self_share": "Você não pode compartilhar o ambiente com você mesmo.",
+      "lookup_fail": "Não foi possível verificar o e-mail no momento.",
+      "user_not_found_title": "Usuário não encontrado",
+      "user_not_found_msg": "Não existe conta cadastrada com esse e-mail.",
+      "existing_check_fail": "Não foi possível verificar convites existentes.",
+      "already_shared": "Este ambiente já foi compartilhado com esse usuário.",
+      "invite_pending": "Já existe um convite pendente para esse e-mail.",
+      "env_not_found": "Não foi possível encontrar o nome do ambiente.",
+      "insert_fail": "Não foi possível compartilhar o ambiente.",
+      "unexpected": "Erro inesperado ao compartilhar ambiente."
+    }
+  },
+  "invites": {
+    "modal_text": "Você foi convidado para o ambiente: {{env}}."
+  },
+  "login": {
+    "welcome": "Bem-vindo",
+    "subtitle": "Acesse sua conta",
+    "email_ph": "E-mail",
+    "password_ph": "Senha",
+    "remember_me": "Manter-me logado",
+    "sign_in": "Entrar",
+    "no_account": "Não tem uma conta?",
+    "register": "Registre-se",
+    "forgot_password": "Esqueci minha senha"
+  },
+  "register": {
+    "title": "Criar Conta",
+    "subtitle": "Preencha os dados abaixo",
+    "placeholders": {
+      "full_name": "Nome Completo",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "password": "Senha",
+      "confirm_password": "Confirmar Senha"
+    },
+    "cta": "Registrar",
+    "have_account": "Já tem uma conta?",
+    "sign_in": "Entrar",
+    "success": "Usuário registrado com sucesso!",
+    "errors": {
+      "passwords_not_match": "As senhas não coincidem!",
+      "profile_create": "Houve um problema ao criar o perfil. Tente novamente.",
+      "unexpected": "Ocorreu um erro inesperado."
+    }
+  },
+  "greetingHeader": {
+    "hello": "Olá!",
+    "hello_name": "Olá, {{name}}!"
+  },
+  "userProfile": {
+    "title": "Meu Perfil",
+    "fields": {
+      "name": "Nome",
+      "email": "E-mail",
+      "phone": "Telefone"
+    },
+    "actions": {
+      "change_password": "Alterar Senha"
+    },
+    "errors": {
+      "user_not_found": "Usuário não encontrado.",
+      "load_failed": "Não foi possível carregar o perfil."
+    }
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Credenciais de login inválidas",
+      "email_registered": "E-mail já registrado",
+      "user_registered": "Usuário já registrado",
+      "missing_email": "Preencha o e-mail para prosseguir",
+      "password_min": "A senha deve ter pelo menos 6 caracteres",
+      "user_not_confirmed": "Usuário não confirmado"
+    },
+    "reset": {
+      "title": "Recuperar Senha",
+      "placeholder": "Digite seu e-mail",
+      "send": "Enviar E-mail",
+      "missing_email": "Por favor, insira um e-mail.",
+      "error": "Não foi possível enviar o e-mail de redefinição de senha.",
+      "success": "Se existir uma conta com este e-mail, você receberá instruções!"
+    }
+  },
+  "lang": {
+    "select": "Selecionar Idioma"
+  }
+}
