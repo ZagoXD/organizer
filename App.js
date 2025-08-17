@@ -14,13 +14,13 @@ import SearchItemScreen from './screens/SearchItemScreen';
 import BoxDetailsScreen from './screens/BoxDetailsScreen';
 import EnvironmentScreen from './screens/EnvironmentScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
+import GreetingHeader from './components/GreetingHeader';
 
 import { BoxProvider } from './context/BoxContext';
 import { UserProvider } from './context/UserContext';
 import { InviteProvider, InviteContext } from './context/InviteContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { navigationRef } from './navigation';
-
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import LangToggle from './components/langToggle';
@@ -118,7 +118,12 @@ export default function App() {
                 initialRouteName="Login"
                 screenOptions={{
                   headerRight: () => <LangToggle />,
+
+                  //ios
                   headerRightContainerStyle: { paddingRight: 12 },
+                  headerBackTitleVisible: false,
+                  headerBackTitle: '',
+                  headerTruncatedBackTitle: '',
                 }}
               >
                 <Stack.Screen name="Login" component={LoginScreen} options={{ title: '' }} />
@@ -128,7 +133,9 @@ export default function App() {
                   name="Environments"
                   component={EnvironmentScreen}
                   options={{
-                    title: '',
+                    headerTitle: () => <GreetingHeader />,
+                    headerTitleAlign: 'left',
+                    headerTitleContainerStyle: { left: 16, right: 16 },
                     headerLeft: () => null,
                     headerBackground: () => curvedHeader,
                   }}

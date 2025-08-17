@@ -6,7 +6,6 @@ import { useContext } from 'react';
 import { BoxContext } from '../context/BoxContext';
 import { useFocusEffect } from '@react-navigation/native';
 import BottomBar from '../components/BottomBar';
-import GreetingHeader from '../components/GreetingHeader';
 import { useTranslation } from 'react-i18next';
 
 export default function EnvironmentScreen({ navigation }) {
@@ -454,7 +453,6 @@ export default function EnvironmentScreen({ navigation }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.container}>
-        <GreetingHeader />
         <View style={styles.TopBarContainer}>
           <View style={styles.topBarRow}>
             <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>

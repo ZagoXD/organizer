@@ -1,3 +1,4 @@
+// components/GreetingHeader.js
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { UserContext } from '../context/UserContext';
@@ -14,7 +15,12 @@ export default function GreetingHeader() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text} accessibilityLabel={message}>
+      <Text
+        style={styles.text}
+        accessibilityLabel={message}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
         {message}
       </Text>
     </View>
@@ -22,14 +28,6 @@ export default function GreetingHeader() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingVertical: 10,
-    alignItems: 'flex-start',
-  },
-  text: {
-    color: 'black',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+  container: { paddingVertical: 0 },
+  text: { color: '#111', fontSize: 20, fontWeight: 'bold' },
 });

@@ -5,7 +5,6 @@ import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 import BottomBar from '../components/BottomBar';
 import { useTranslation } from 'react-i18next';
-// import GreetingHeader from '../components/GreetingHeader';
 
 export default function HomeScreen({ route, navigation }) {
   const { t } = useTranslation();
@@ -125,7 +124,6 @@ const handleRemoveBox = (boxId) => {
   return (
   <View style={{ flex: 1 }}>
     <View style={styles.container}>
-      {/* <GreetingHeader /> */}
       <View style={styles.TopBarContainer}>
         <View style={styles.searchWrapperRow}>
           <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>
