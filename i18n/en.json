@@ -1,0 +1,47 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "no_name": "No name",
+    "error": "Error",
+    "success": "Success"
+  },
+  "screens": {
+    "home": { "title": "Compartments" },
+    "boxDetails": { "title": "Compartment Details" },
+    "userProfile": { "title": "User Profile" }
+  },
+  "search": { "title": "Search" },
+  "share": { "title": "Share Environment" },
+  "invites": {
+    "modal_text": "You have been invited to the environment: {{env}}."
+  },
+  "login": {
+    "welcome": "Welcome",
+    "subtitle": "Sign in to your account",
+    "email_ph": "Email",
+    "password_ph": "Password",
+    "remember_me": "Keep me signed in",
+    "sign_in": "Sign in",
+    "no_account": "Don't have an account?",
+    "register": "Register",
+    "forgot_password": "Forgot my password"
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Invalid login credentials",
+      "email_registered": "Email already registered",
+      "missing_email": "Please provide an email to continue",
+      "password_min": "Password should be at least 6 characters",
+      "user_not_confirmed": "User not confirmed"
+    },
+    "reset": {
+      "title": "Reset Password",
+      "placeholder": "Enter your email",
+      "send": "Send Email",
+      "missing_email": "Please enter an email.",
+      "error": "Couldn't send the password reset email.",
+      "success": "If an account exists for this email, you will receive instructions!"
+    }
+  }
+}

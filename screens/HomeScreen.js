@@ -4,9 +4,11 @@ import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 import BottomBar from '../components/BottomBar';
+import { useTranslation } from 'react-i18next';
 // import GreetingHeader from '../components/GreetingHeader';
 
 export default function HomeScreen({ route, navigation }) {
+  const { t } = useTranslation();
   const { environmentId } = route.params || {};
   const { boxes, addBox, removeBox, fetchBoxes } = useContext(BoxContext);
   const [search, setSearch] = useState('');
@@ -55,26 +57,26 @@ export default function HomeScreen({ route, navigation }) {
     );
   };
 
-  const handleRemoveBox = (boxId) => {
-    Alert.alert(
-      "Confirmação",
-      "Tem certeza que deseja excluir este compartimento? Todos seus objetos serão perdidos",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await removeBox(boxId, environmentId);
-            } catch (error) {
-              console.error("Erro ao tentar remover a caixa:", error);
-            }
+const handleRemoveBox = (boxId) => {
+  Alert.alert(
+    t('boxes.confirm_title'),
+    t('boxes.confirm_msg'),
+    [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removeBox(boxId, environmentId);
+          } catch (error) {
+            console.error("Erro ao tentar remover a caixa:", error);
           }
         }
-      ]
-    );
-  };
+      }
+    ]
+  );
+};
 
   const boxList = combinedFilteredBoxes().map(boxId => ({
     id: boxId,
@@ -121,69 +123,70 @@ export default function HomeScreen({ route, navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.container}>
-        {/* <GreetingHeader /> */}
-        <View style={styles.TopBarContainer}>
-          <View style={styles.searchWrapperRow}>
-            <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>
-              <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Pesquisar compartimento"
-                value={search}
-                onChangeText={setSearch}
-                placeholderTextColor="#aaa"
-              />
-            </View>
+  <View style={{ flex: 1 }}>
+    <View style={styles.container}>
+      {/* <GreetingHeader /> */}
+      <View style={styles.TopBarContainer}>
+        <View style={styles.searchWrapperRow}>
+          <View style={[styles.searchContainer, { flex: 1, marginVertical: 0 }]}>
+            <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('search.placeholders.boxes')}
+              value={search}
+              onChangeText={setSearch}
+              placeholderTextColor="#aaa"
+            />
+          </View>
 
-            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.floatingButton}>
-              <Icon name="add" size={28} color="#fff" />
+          <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.floatingButton}>
+            <Icon name="add" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <FlatList
+        data={boxList}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={<Text style={styles.emptyText}>{t('boxes.empty')}</Text>}
+      />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>{t('boxes.add_title')}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('boxes.name_ph')}
+              value={newBoxName}
+              onChangeText={setNewBoxName}
+              placeholderTextColor="#888"
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleAddBox}
+            >
+              <Text style={styles.modalButtonText}>{t('boxes.add_cta')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        <FlatList
-          data={boxList}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={<Text style={styles.emptyText}>Nenhum compartimento encontrado para este ambiente.</Text>}
-        />
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Adicionar Novo Compartimento</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nome do compartimento"
-                value={newBoxName}
-                onChangeText={setNewBoxName}
-                placeholderTextColor="#888"
-              />
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleAddBox}
-              >
-                <Text style={styles.modalButtonText}>Adicionar Compartimento</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </View>
-      <BottomBar />
+      </Modal>
     </View>
-  );
+    <BottomBar />
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

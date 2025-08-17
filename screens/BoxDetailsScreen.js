@@ -4,9 +4,11 @@ import { Icon } from 'react-native-elements';
 import { BoxContext } from '../context/BoxContext';
 import { supabase } from '../supabase';
 import BottomBar from '../components/BottomBar';
+import { useTranslation } from 'react-i18next';
 // import GreetingHeader from '../components/GreetingHeader';
 
 export default function BoxDetailsScreen({ route }) {
+  const { t } = useTranslation();
   const { boxId } = route.params;
   const { addItemToBox, updateItemInBox, removeItemFromBox } = useContext(BoxContext);
   const [items, setItems] = useState([]);
@@ -93,7 +95,7 @@ export default function BoxDetailsScreen({ route }) {
           const success = await updateItemInBox(boxId, updatedItem);
 
           if (!success) {
-            Alert.alert('Erro', 'Não foi possível atualizar o item.');
+            Alert.alert(t('common.error'), t('items.update_error'));
             return;
           }
 
@@ -108,7 +110,7 @@ export default function BoxDetailsScreen({ route }) {
           const createdItem = await addItemToBox(boxId, newItem);
 
           if (!createdItem) {
-            Alert.alert("Erro", "Um item com este nome já existe neste container");
+            Alert.alert(t('common.error'), t('items.duplicate_error'));
             return;
           }
 
@@ -126,8 +128,26 @@ export default function BoxDetailsScreen({ route }) {
 
   // Função para remover um item
   const removeItem = async (item) => {
-    await removeItemFromBox(boxId, item.name);
-    setItems(items.filter(i => i.name !== item.name));
+    Alert.alert(
+      t('items.confirm_delete_title'),
+      t('items.confirm_delete_msg', { name: item.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeItemFromBox(boxId, item.name);
+              setItems((prev) => prev.filter(i => i.name !== item.name));
+            } catch (e) {
+              console.error('Erro ao remover item:', e);
+              Alert.alert(t('common.error'), t('items.remove_error'));
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Função para editar um item
@@ -155,7 +175,7 @@ export default function BoxDetailsScreen({ route }) {
             <Icon name="layers" size={20} color="#000" style={styles.iconItem} />
             <Text style={styles.itemName}>{item.name}</Text>
           </View>
-          <Text style={styles.itemQuantity}>Quantidade: {item.quantity}</Text>
+          <Text style={styles.itemQuantity}>{t('items.quantity')}: {item.quantity}</Text>
         </View>
         <View style={styles.itemActions}>
           <TouchableOpacity onPress={() => editItem(item)}>
@@ -178,7 +198,7 @@ export default function BoxDetailsScreen({ route }) {
             <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Pesquisar objeto"
+              placeholder={t('items.search_ph')}
               value={search}
               onChangeText={setSearch}
               placeholderTextColor="#aaa"
@@ -201,7 +221,7 @@ export default function BoxDetailsScreen({ route }) {
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
           style={styles.itemList}
-          ListEmptyComponent={<Text style={styles.emptyText}>Nenhum item encontrado.</Text>}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('items.empty')}</Text>}
         />
 
         <Modal
@@ -213,18 +233,18 @@ export default function BoxDetailsScreen({ route }) {
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>
-                {editingItem ? 'Editar Item' : 'Adicionar Novo Item'}
+                {editingItem ? t('items.edit_title') : t('items.add_title')}
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Nome do item"
+                placeholder={t('items.name_ph')}
                 value={newItemName}
                 onChangeText={setNewItemName}
                 placeholderTextColor="#888"
               />
               <TextInput
                 style={styles.input}
-                placeholder="Quantidade"
+                placeholder={t('items.qty_ph')}
                 value={newItemQuantity}
                 keyboardType="numeric"
                 onChangeText={setNewItemQuantity}
@@ -235,14 +255,14 @@ export default function BoxDetailsScreen({ route }) {
                 onPress={saveItem}
               >
                 <Text style={styles.modalButtonText}>
-                  {editingItem ? "Salvar Alterações" : "Adicionar"}
+                  {editingItem ? t('items.save_changes') : t('items.add_cta')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>

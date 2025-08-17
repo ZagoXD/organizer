@@ -64,7 +64,7 @@ export const InviteProvider = ({ children }) => {
           if (envError) {
             console.error('Erro ao buscar nome do ambiente:', envError.message);
           } else {
-            console.log(`🚨 Novo convite inserido via Realtime para o ambiente: ${envData.name}`);
+            console.log(`Novo convite inserido via Realtime para o ambiente: ${envData.name}`);
           }
 
           checkPendingInvites();

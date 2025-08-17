@@ -4,22 +4,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 export default function BottomBar() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     Alert.alert(
-      'Sair',
-      'Tem certeza de que deseja sair?',
+      t('session.logout_title'),
+      t('session.logout_msg'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sim',
+          text: t('common.yes'),
           onPress: async () => {
             await supabase.auth.signOut();
             await AsyncStorage.removeItem('rememberMe');
-            navigation.navigate('Login');
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
           },
         },
       ],
@@ -65,12 +67,11 @@ export default function BottomBar() {
 const styles = StyleSheet.create({
   container: {
     height: 90,
-    backgroundColor: '#fff',
+    backgroundColor: '#e8e8e8',
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     alignItems: 'center',
     zIndex: 1,
-    backgroundColor: '#e8e8e8',
   },
   buttonRow: {
     flexDirection: 'row',

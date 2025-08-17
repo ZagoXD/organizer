@@ -4,9 +4,11 @@ import { Icon } from 'react-native-elements';
 import { supabase } from '../supabase';
 import { BoxContext } from '../context/BoxContext';
 import BottomBar from '../components/BottomBar';
+import { useTranslation } from 'react-i18next';
 
 export default function SearchItemScreen({ navigation }) {
   const { boxes, fetchAllBoxes } = useContext(BoxContext);
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [envMap, setEnvMap] = useState({});
   const [mode, setMode] = useState('items'); // 'items' | 'boxes'
@@ -53,9 +55,9 @@ export default function SearchItemScreen({ navigation }) {
             out.push({
               key: `i:${boxId}:${name}:${out.length}`,
               envId: box.environment_id,
-              envName: envMap[box.environment_id] ?? 'Ambiente',
+              envName: envMap[box.environment_id] ?? t('search.env'),
               boxId,
-              boxName: box.name ?? 'Compartimento',
+              boxName: box.name ?? t('search.box'),
               itemName: name,
               kind: 'item',
             });
@@ -76,7 +78,7 @@ export default function SearchItemScreen({ navigation }) {
           out.push({
             key: `b:${boxId}:${out.length}`,
             envId: box.environment_id,
-            envName: envMap[box.environment_id] ?? 'Ambiente',
+            envName: envMap[box.environment_id] ?? t('search.env'),
             boxId,
             boxName: name,
             itemName: null,
@@ -91,7 +93,7 @@ export default function SearchItemScreen({ navigation }) {
     }
 
     return out;
-  }, [query, boxes, envMap, mode]);
+  }, [query, boxes, envMap, mode, t]);
 
   const renderResult = ({ item }) => {
     const leftIcon = item.kind === 'item' ? 'layers' : 'inventory';
@@ -120,10 +122,13 @@ export default function SearchItemScreen({ navigation }) {
     );
   };
 
-  const placeholder = mode === 'items' ? 'Pesquisar objeto' : 'Pesquisar compartimento';
+  const placeholder = mode === 'items'
+    ? t('search.placeholders.items')
+    : t('search.placeholders.boxes');
+
   const helper = mode === 'items'
-    ? 'Ambiente › Compartimento › Objeto'
-    : 'Ambiente › Compartimento';
+    ? `${t('search.env')} › ${t('search.box')} › ${t('search.item')}`
+    : `${t('search.env')} › ${t('search.box')}`;
 
   return (
     <View style={styles.root}>
@@ -139,7 +144,7 @@ export default function SearchItemScreen({ navigation }) {
               onPress={() => setMode('items')}
             >
               <Text style={[styles.toggleText, mode === 'items' && styles.toggleTextActive]}>
-                Objetos
+                {t('search.modes.items')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -147,7 +152,7 @@ export default function SearchItemScreen({ navigation }) {
               onPress={() => setMode('boxes')}
             >
               <Text style={[styles.toggleText, mode === 'boxes' && styles.toggleTextActive]}>
-                Compartimentos
+                {t('search.modes.boxes')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -170,12 +175,12 @@ export default function SearchItemScreen({ navigation }) {
         {query.trim().length === 0 ? (
           <View style={styles.helperWrap}>
             <Text style={styles.helperText}>
-              Digite para localizar: <Text style={{ fontWeight: '700' }}>{helper}</Text>
+              {t('search.helper_prefix')} <Text style={{ fontWeight: '700' }}>{helper}</Text>
             </Text>
           </View>
         ) : results.length === 0 ? (
           <View style={styles.helperWrap}>
-            <Text style={styles.helperText}>Nenhum resultado encontrado.</Text>
+            <Text style={styles.helperText}>{t('search.none')}</Text>
           </View>
         ) : (
           <FlatList
