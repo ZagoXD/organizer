@@ -156,6 +156,8 @@
     }
   },
   "auth": {
+    "session_expired_title": "Sesión expirada",
+    "session_expired_msg": "Vuelve a iniciar sesión.",
     "errors": {
       "invalid_credentials": "Credenciales inválidas",
       "email_registered": "Correo ya registrado",

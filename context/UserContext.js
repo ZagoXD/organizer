@@ -1,12 +1,14 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { supabase } from '../supabase';
 import { Alert } from 'react-native';
-import { navigate } from '../navigation'; 
+import { supabase } from '../supabase';
+import { navigate } from '../navigation';
+import { useTranslation } from 'react-i18next';
 
 export const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [firstName, setFirstName] = useState('');
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -17,20 +19,26 @@ export function UserProvider({ children }) {
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) return;
+      if (profileError || !profile?.full_name) {
+        setFirstName('');
+        return;
+      }
 
-      const nameParts = profile.full_name.split(' ');
-      const first = nameParts.length > 0 ? nameParts[0] : '';
+      const first = (profile.full_name || '').trim().split(' ')[0] || '';
       setFirstName(first);
     };
 
     fetchUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        Alert.alert('Sessão expirada', 'Faça login novamente.');
+        Alert.alert(
+          t('auth.session_expired_title', { defaultValue: 'Sessão expirada' }),
+          t('auth.session_expired_msg', { defaultValue: 'Faça login novamente.' })
+        );
+        setFirstName('');
         navigate('Login');
       } else {
         fetchUser();
@@ -38,9 +46,9 @@ export function UserProvider({ children }) {
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      authListener?.subscription?.unsubscribe?.();
     };
-  }, []);
+  }, [t]);
 
   return (
     <UserContext.Provider value={{ firstName }}>

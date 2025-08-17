@@ -156,6 +156,8 @@
     }
   },
   "auth": {
+    "session_expired_title": "Session expired",
+    "session_expired_msg": "Please sign in again.",
     "errors": {
       "invalid_credentials": "Invalid login credentials",
       "email_registered": "Email already registered",
