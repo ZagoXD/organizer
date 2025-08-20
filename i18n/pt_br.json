@@ -1,6 +1,7 @@
 {
   "common": {
     "ok": "OK",
+    "leave": "Sair",
     "cancel": "Cancelar",
     "no_name": "Sem nome",
     "error": "Erro",
@@ -8,7 +9,10 @@
     "unexpected": "Ocorreu um erro inesperado.",
     "delete": "Excluir",
     "attention": "Atenção",
-    "yes": "Sim"
+    "yes": "Sim",
+    "error_title": "Erro",
+    "attention_title": "Atenção",
+    "done_title": "Pronto"
   },
   "screens": {
     "home": {
@@ -63,7 +67,10 @@
     "duplicate_error": "Um item com este nome já existe neste compartimento",
     "confirm_delete_title": "Remover item",
     "confirm_delete_msg": "Tem certeza que deseja remover \"{{name}}\"? Esta ação não pode ser desfeita.",
-    "remove_error": "Não foi possível remover o item."
+    "remove_error": "Não foi possível remover o item.",
+    "quantity_invalid": "Informe uma quantidade inteira.",
+    "quantity_out_of_range": "Quantidade inválida. Use um número entre 0 e {{max}}.",
+    "create_error": "Não foi possível salvar o item."
   },
   "environments": {
     "search_ph": "Pesquisar ambiente",
@@ -75,7 +82,8 @@
     "creating": "Criando...",
     "create_missing_name": "Por favor, insira um nome para o ambiente.",
     "delete_confirm_title": "Confirmação",
-    "delete_confirm_msg": "Tem certeza que deseja excluir este ambiente?"
+    "delete_confirm_msg": "Tem certeza que deseja excluir este ambiente?",
+    "unshare_confirm_msg": "Tem certeza que deseja sair deste ambiente? Você perderá o acesso, mas nada será excluído para os demais."
   },
   "share": {
     "title": "Compartilhar Ambiente",
@@ -154,6 +162,14 @@
       "user_not_found": "Usuário não encontrado.",
       "load_failed": "Não foi possível carregar o perfil."
     }
+  },
+  "shares": {
+    "revoke_title": "Remover acesso",
+    "revoke_msg": "Tem certeza que deseja remover o acesso de {{email}}?",
+    "revoke_cta": "Remover",
+    "revoke_error": "Não foi possível remover o acesso.",
+    "revoke_nothing": "Nada foi removido (verifique permissões).",
+    "revoke_done": "Acesso de {{email}} removido."
   },
   "auth": {
     "session_expired_title": "Sessão expirada",

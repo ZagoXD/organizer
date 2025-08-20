@@ -8,7 +8,11 @@
     "unexpected": "Ocurrió un error inesperado.",
     "delete": "Eliminar",
     "attention": "Atención",
-    "yes": "Sí"
+    "yes": "Sí",
+    "leave": "Salir",
+    "error_title": "Error",
+    "attention_title": "Atención",
+    "done_title": "Listo"
   },
   "screens": {
     "home": {
@@ -63,7 +67,10 @@
     "duplicate_error": "Ya existe un ítem con este nombre en este compartimento",
     "confirm_delete_title": "Eliminar ítem",
     "confirm_delete_msg": "¿Seguro que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
-    "remove_error": "No se pudo eliminar el ítem."
+    "remove_error": "No se pudo eliminar el ítem.",
+    "quantity_invalid": "Ingresa un número entero.",
+    "quantity_out_of_range": "Cantidad inválida. Usa un número entre 0 y {{max}}.",
+    "create_error": "No se pudo guardar el artículo."
   },
   "environments": {
     "search_ph": "Buscar entorno",
@@ -75,7 +82,8 @@
     "creating": "Creando...",
     "create_missing_name": "Por favor, introduce un nombre para el entorno.",
     "delete_confirm_title": "Confirmación",
-    "delete_confirm_msg": "¿Seguro que deseas eliminar este entorno?"
+    "delete_confirm_msg": "¿Seguro que deseas eliminar este entorno?",
+    "unshare_confirm_msg": "¿Seguro que quieres salir de este entorno? Perderás el acceso, pero no se eliminará nada para las demás personas."
   },
   "share": {
     "title": "Compartir entorno",
@@ -154,6 +162,14 @@
       "user_not_found": "Usuario no encontrado.",
       "load_failed": "No se pudo cargar el perfil."
     }
+  },
+  "shares": {
+    "revoke_title": "Revocar acceso",
+    "revoke_msg": "¿Seguro que deseas revocar el acceso de {{email}}?",
+    "revoke_cta": "Revocar",
+    "revoke_error": "No se pudo revocar el acceso.",
+    "revoke_nothing": "No se revocó nada (verifica los permisos).",
+    "revoke_done": "Se revocó el acceso de {{email}}."
   },
   "auth": {
     "session_expired_title": "Sesión expirada",

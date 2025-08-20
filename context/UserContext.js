@@ -34,10 +34,6 @@ export function UserProvider({ children }) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        Alert.alert(
-          t('auth.session_expired_title', { defaultValue: 'Sessão expirada' }),
-          t('auth.session_expired_msg', { defaultValue: 'Faça login novamente.' })
-        );
         setFirstName('');
         navigate('Login');
       } else {

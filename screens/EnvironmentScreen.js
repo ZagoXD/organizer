@@ -192,31 +192,57 @@ export default function EnvironmentScreen({ navigation }) {
     navigation.navigate('Home', { environmentId: environment.id });
   };
 
-  //Deleta Ambiente
-  const handleDeleteEnvironment = (environmentId) => {
-    Alert.alert(
-      t('environments.delete_confirm_title'),
-      t('environments.delete_confirm_msg'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => {
-            (async () => {
+  const handleDeleteEnvironment = async (environmentId) => {
+    try {
+      const [{ data: { user } }, { data: envData, error: envError }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from('environments').select('user_id').eq('id', environmentId).single()
+      ]);
+
+      if (envError || !envData) {
+        console.error('Erro ao carregar ambiente para confirmação:', envError?.message);
+        return;
+      }
+
+      const isOwner = !!user && envData.user_id === user.id;
+
+      const title = t('environments.delete_confirm_title', { defaultValue: 'Confirmação' });
+      const message = isOwner
+        ? t('environments.delete_confirm_msg', {
+          defaultValue: 'Tem certeza que deseja excluir este ambiente? Esta ação é permanente.'
+        })
+        : t('environments.unshare_confirm_msg', {
+          defaultValue: 'Tem certeza que deseja sair deste ambiente? Você perderá o acesso, mas nada será excluído para os demais.'
+        });
+
+      const cta = isOwner
+        ? t('common.delete', { defaultValue: 'Excluir' })
+        : t('common.leave', { defaultValue: 'Sair' });
+
+      Alert.alert(
+        title,
+        message,
+        [
+          { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
+          {
+            text: cta,
+            style: 'destructive',
+            onPress: async () => {
               try {
                 const success = await removeEnvironment(environmentId);
                 if (success) {
                   setEnvironments(prev => prev.filter(env => env.id !== environmentId));
                 }
               } catch (error) {
-                console.error("Erro ao tentar remover o ambiente:", error);
+                console.error('Erro ao tentar remover o ambiente:', error);
               }
-            })();
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } catch (e) {
+      console.error('Erro ao preparar confirmação:', e?.message);
+    }
   };
 
   //Compartilhar Ambiente
@@ -369,12 +395,12 @@ export default function EnvironmentScreen({ navigation }) {
 
   const handleRevokeAccess = (shareId, email) => {
     Alert.alert(
-      'Remover acesso',
-      `Tem certeza que deseja remover o acesso de ${email}?`,
+      t('shares.revoke_title', { defaultValue: 'Remover acesso' }),
+      t('shares.revoke_msg', { email, defaultValue: 'Tem certeza que deseja remover o acesso de {{email}}?' }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
         {
-          text: 'Remover',
+          text: t('shares.revoke_cta', { defaultValue: 'Remover' }),
           style: 'destructive',
           onPress: async () => {
             setRevokingId(shareId);
@@ -387,20 +413,32 @@ export default function EnvironmentScreen({ navigation }) {
 
               if (error) {
                 console.error('[revoke] delete error:', error);
-                Alert.alert('Erro', 'Não foi possível remover o acesso.');
+                Alert.alert(
+                  t('common.error_title', { defaultValue: 'Erro' }),
+                  t('shares.revoke_error', { defaultValue: 'Não foi possível remover o acesso.' })
+                );
                 return;
               }
 
               if (!data || data.length === 0) {
-                Alert.alert('Atenção', 'Nada foi removido (verifique permissões).');
+                Alert.alert(
+                  t('common.attention_title', { defaultValue: 'Atenção' }),
+                  t('shares.revoke_nothing', { defaultValue: 'Nada foi removido (verifique permissões).' })
+                );
                 return;
               }
 
               setAccessList(prev => prev.filter(s => s.id !== shareId));
-              Alert.alert('Pronto', `Acesso de ${email} removido.`);
+              Alert.alert(
+                t('common.done_title', { defaultValue: 'Pronto' }),
+                t('shares.revoke_done', { email, defaultValue: 'Acesso de {{email}} removido.' })
+              );
             } catch (e) {
               console.error('[revoke] unexpected:', e);
-              Alert.alert('Erro', 'Não foi possível remover o acesso.');
+              Alert.alert(
+                t('common.error_title', { defaultValue: 'Erro' }),
+                t('shares.revoke_error', { defaultValue: 'Não foi possível remover o acesso.' })
+              );
             } finally {
               setRevokingId(null);
             }
@@ -559,12 +597,10 @@ export default function EnvironmentScreen({ navigation }) {
 
                     return (
                       <View style={styles.shareRow}>
-                        {/* Avatar */}
                         <View style={styles.avatar}>
                           <Text style={styles.avatarText}>{initial}</Text>
                         </View>
 
-                        {/* Nome + Email (1 linha cada) */}
                         <View style={styles.shareInfo}>
                           <Text
                             style={styles.shareName}
@@ -584,7 +620,6 @@ export default function EnvironmentScreen({ navigation }) {
                           )}
                         </View>
 
-                        {/* Coluna de ações (ícones empilhados) */}
                         <View style={styles.actionsCol}>
                           <View
                             style={[

@@ -96,11 +96,12 @@ export default function HomeScreen({ route, navigation }) {
   //Busca local de caixas
   const filteredIds = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return Object.keys(boxes || {});
-    return Object.keys(boxes || {}).filter(
-      (boxId) => (boxes[boxId]?.name || '').toLowerCase().includes(term)
-    );
-  }, [search, boxes]);
+    return Object.keys(boxes || {}).filter((boxId) => {
+      const b = boxes[boxId];
+      if (!b || b.environment_id !== environmentId) return false;
+      return !term || (b.name || '').toLowerCase().includes(term);
+    });
+  }, [search, boxes, environmentId]);
 
   const boxList = filteredIds.map((id) => ({
     id,
