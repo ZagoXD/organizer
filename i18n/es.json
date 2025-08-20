@@ -8,7 +8,11 @@
     "unexpected": "Ocurrió un error inesperado.",
     "delete": "Eliminar",
     "attention": "Atención",
-    "yes": "Sí"
+    "yes": "Sí",
+    "leave": "Salir",
+    "error_title": "Error",
+    "attention_title": "Atención",
+    "done_title": "Listo"
   },
   "screens": {
     "home": {
@@ -75,7 +79,8 @@
     "creating": "Creando...",
     "create_missing_name": "Por favor, introduce un nombre para el entorno.",
     "delete_confirm_title": "Confirmación",
-    "delete_confirm_msg": "¿Seguro que deseas eliminar este entorno?"
+    "delete_confirm_msg": "¿Seguro que deseas eliminar este entorno?",
+    "unshare_confirm_msg": "¿Seguro que quieres salir de este entorno? Perderás el acceso, pero no se eliminará nada para las demás personas."
   },
   "share": {
     "title": "Compartir entorno",
@@ -154,6 +159,14 @@
       "user_not_found": "Usuario no encontrado.",
       "load_failed": "No se pudo cargar el perfil."
     }
+  },
+  "shares": {
+    "revoke_title": "Revocar acceso",
+    "revoke_msg": "¿Seguro que deseas revocar el acceso de {{email}}?",
+    "revoke_cta": "Revocar",
+    "revoke_error": "No se pudo revocar el acceso.",
+    "revoke_nothing": "No se revocó nada (verifica los permisos).",
+    "revoke_done": "Se revocó el acceso de {{email}}."
   },
   "auth": {
     "session_expired_title": "Sesión expirada",

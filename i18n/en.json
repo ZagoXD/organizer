@@ -8,7 +8,11 @@
     "unexpected": "An unexpected error occurred.",
     "delete": "Delete",
     "attention": "Attention",
-    "yes": "Yes"
+    "yes": "Yes",
+    "leave": "Leave",
+    "error_title": "Error",
+    "attention_title": "Attention",
+    "done_title": "Done"
   },
   "screens": {
     "home": {
@@ -75,7 +79,8 @@
     "creating": "Creating...",
     "create_missing_name": "Please enter a name for the environment.",
     "delete_confirm_title": "Confirmation",
-    "delete_confirm_msg": "Are you sure you want to delete this environment?"
+    "delete_confirm_msg": "Are you sure you want to delete this environment?",
+    "unshare_confirm_msg": "Are you sure you want to leave this environment? You will lose access, but nothing will be deleted for others."
   },
   "share": {
     "title": "Share Environment",
@@ -154,6 +159,14 @@
       "user_not_found": "User not found.",
       "load_failed": "Couldn't load profile."
     }
+  },
+  "shares": {
+    "revoke_title": "Remove access",
+    "revoke_msg": "Are you sure you want to remove {{email}}'s access?",
+    "revoke_cta": "Remove",
+    "revoke_error": "Couldn't remove access.",
+    "revoke_nothing": "Nothing was removed (check permissions).",
+    "revoke_done": "Access for {{email}} removed."
   },
   "auth": {
     "session_expired_title": "Session expired",
