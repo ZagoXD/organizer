@@ -67,7 +67,10 @@
     "duplicate_error": "An item with this name already exists in this compartment",
     "confirm_delete_title": "Remove item",
     "confirm_delete_msg": "Are you sure you want to remove \"{{name}}\"? This action cannot be undone.",
-    "remove_error": "Couldn't remove the item."
+    "remove_error": "Couldn't remove the item.",
+    "quantity_invalid": "Enter a whole number.",
+    "quantity_out_of_range": "Invalid quantity. Use a number between 0 and {{max}}.",
+    "create_error": "Could not save the item."
   },
   "environments": {
     "search_ph": "Search environment",

@@ -67,7 +67,10 @@
     "duplicate_error": "Um item com este nome já existe neste compartimento",
     "confirm_delete_title": "Remover item",
     "confirm_delete_msg": "Tem certeza que deseja remover \"{{name}}\"? Esta ação não pode ser desfeita.",
-    "remove_error": "Não foi possível remover o item."
+    "remove_error": "Não foi possível remover o item.",
+    "quantity_invalid": "Informe uma quantidade inteira.",
+    "quantity_out_of_range": "Quantidade inválida. Use um número entre 0 e {{max}}.",
+    "create_error": "Não foi possível salvar o item."
   },
   "environments": {
     "search_ph": "Pesquisar ambiente",

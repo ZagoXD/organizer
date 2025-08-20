@@ -77,51 +77,52 @@ export default function BoxDetailsScreen({ route }) {
     );
   };
 
-
-  // Função para salvar item (adicionar ou editar)
   const saveItem = async () => {
     try {
-      if (newItemName && newItemQuantity) {
-        const newItem = { name: newItemName, quantity: newItemQuantity };
+      if (!newItemName || newItemName.trim() === '' || newItemQuantity === '') return;
 
-        if (editingItem) {
-          const updatedItem = {
-            originalName: editingItem.name,
-            name: newItemName,
-            quantity: newItemQuantity
-          };
+      const SMALLINT_MAX = 32767;
+      const qty = Number(newItemQuantity);
 
-          const success = await updateItemInBox(boxId, updatedItem);
+      if (!Number.isInteger(qty)) {
+        Alert.alert(t('common.error'), t('items.quantity_invalid', { defaultValue: 'Informe uma quantidade inteira.' }));
+        return;
+      }
+      if (qty < 0 || qty > SMALLINT_MAX) {
+        Alert.alert(
+          t('common.error'),
+          t('items.quantity_out_of_range', { max: SMALLINT_MAX, defaultValue: `Quantidade inválida. Use um número entre 0 e ${SMALLINT_MAX}.` })
+        );
+        return;
+      }
 
-          if (!success) {
-            Alert.alert(t('common.error'), t('items.update_error'));
-            return;
-          }
+      const nameTrim = newItemName.trim();
 
-          setItems(items.map(item =>
-            item.name === editingItem.name
-              ? { ...item, name: updatedItem.name, quantity: updatedItem.quantity }
-              : item
-          ));
-
-          setEditingItem(null);
-        } else {
-          const createdItem = await addItemToBox(boxId, newItem);
-
-          if (!createdItem) {
-            Alert.alert(t('common.error'), t('items.duplicate_error'));
-            return;
-          }
-
-          setItems([...items, createdItem]);
+      if (editingItem) {
+        const updatedItem = { originalName: editingItem.name, name: nameTrim, quantity: qty };
+        const success = await updateItemInBox(boxId, updatedItem);
+        if (!success) {
+          Alert.alert(t('common.error'), t('items.update_error', { defaultValue: 'Não foi possível atualizar o item.' }));
+          return;
         }
 
-        setNewItemName('');
-        setNewItemQuantity('');
-        setModalVisible(false);
+        setItems(items.map(it => it.name === editingItem.name ? { ...it, name: updatedItem.name, quantity: updatedItem.quantity } : it));
+        setEditingItem(null);
+      } else {
+        const createdItem = await addItemToBox(boxId, { name: nameTrim, quantity: qty });
+        if (!createdItem) {
+          Alert.alert(t('common.error'), t('items.duplicate_error', { defaultValue: 'Já existe um item com esse nome neste compartimento.' }));
+          return;
+        }
+        setItems([...items, createdItem]);
       }
+
+      setNewItemName('');
+      setNewItemQuantity('');
+      setModalVisible(false);
     } catch (error) {
-      console.error('Erro ao salvar o item:', error.message);
+      console.error('Erro ao salvar o item:', error?.message);
+      Alert.alert(t('common.error'), t('items.create_error', { defaultValue: 'Não foi possível salvar o item.' }));
     }
   };
 

@@ -164,7 +164,7 @@ export const BoxProvider = ({ children }) => {
       console.error('Erro ao obter o usuário:', userError?.message || 'Usuário não autenticado');
       return false;
     }
-    
+
     const { data: envData, error: envError } = await supabase
       .from('environments')
       .select('user_id')
@@ -435,7 +435,6 @@ export const BoxProvider = ({ children }) => {
       return false;
     }
   };
-
 
   //Remover item
   const removeItemFromBox = async (boxId, itemName) => {

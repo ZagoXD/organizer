@@ -67,7 +67,10 @@
     "duplicate_error": "Ya existe un ítem con este nombre en este compartimento",
     "confirm_delete_title": "Eliminar ítem",
     "confirm_delete_msg": "¿Seguro que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
-    "remove_error": "No se pudo eliminar el ítem."
+    "remove_error": "No se pudo eliminar el ítem.",
+    "quantity_invalid": "Ingresa un número entero.",
+    "quantity_out_of_range": "Cantidad inválida. Usa un número entre 0 y {{max}}.",
+    "create_error": "No se pudo guardar el artículo."
   },
   "environments": {
     "search_ph": "Buscar entorno",
