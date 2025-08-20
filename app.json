@@ -2,7 +2,7 @@
   "expo": {
     "name": "organizer",
     "slug": "organizer",
-    "version": "1.1",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "package": "com.nathso.organizer",
         "backgroundColor": "#ffffff",
-        "versionCode": 1.1,
+        "versionCode": 1.2,
         "permissions": []
       },
       "package": "com.nathso.organizer"
