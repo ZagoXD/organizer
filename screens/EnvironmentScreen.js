@@ -155,7 +155,7 @@ export default function EnvironmentScreen({ navigation }) {
       const { data, error } = await supabase
         .from('environments')
         .insert([{ name: newEnvironmentName, user_id: user.id }])
-        .select(); //garante ambiente novo de ser carregado
+        .select();
 
       if (error) {
         console.error('Erro ao criar ambiente:', error.message);
