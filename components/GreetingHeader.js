@@ -1,4 +1,3 @@
-// components/GreetingHeader.js
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { UserContext } from '../context/UserContext';
